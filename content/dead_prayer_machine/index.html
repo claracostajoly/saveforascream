@@ -1,129 +1,52 @@
-<!doctype html>
-<html lang="fr">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>dead_prayer_machine</title>
-
-  <style>
-    :root{
-      --bg:#000;
-      --fg:#ccc;
-      --muted:#999;
-    }
-
-    html,body{
-      margin:0;
-      background:var(--bg);
-      color:var(--fg);
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size:14px;
-      animation: fadeInSpectral 1.6s ease-out both;
-    }
-
-    @keyframes fadeInSpectral {
-      from { opacity: 0; filter: blur(2px); }
-      to { opacity: 1; filter: blur(0); }
-    }
-
-    main{
-      max-width:680px;
-      margin:80px auto 120px;
-      padding:0 30px;
-    }
-
-    a{
-      color:var(--fg);
-      text-decoration:none;
-    }
-
-    h1{
-      font-size:clamp(20px,2.6vw,28px);
-      font-weight:500;
-      letter-spacing:.02em;
-      margin:1.2rem 0 .4rem;
-      text-align:center;
-    }
-
-    h1 a{
-      display:inline-block;
-      text-align:center;
-    }
-
-    p{
-      line-height:1.65;
-      margin:0.9rem 0;
-      text-align:justify;
-      opacity:.82;
-      transition:opacity .6s ease, color .6s ease, text-shadow .6s ease;
-    }
-
-    p:hover{
-      opacity:1;
-      color:#ddd;
-      text-shadow:0 0 6px rgba(255,255,255,0.04);
-    }
-
-    .meta{
-      display:none !important;
-    }
-
-    .spacer{
-      height:8rem;
-      display:block;
-    }
-
-    p[data-fade]{
-      opacity:var(--fade,1);
-      transition: opacity 2.5s ease, color 2.5s ease;
-    }
-
-    p[data-fade]:hover{
-      opacity:1 !important;
-      color:#eee;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>y = y2</title>
+<style>
+body {
+  background: black;
+  color: white;
+  font-family: Arial;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background: none;
+  border: 1px solid white;
+  color: white;
+  cursor: pointer;
+}
+</style>
 </head>
-
 <body>
-  <main>
 
-    <h1>
-      <a href="../../">dead_prayer_machine</a>
-    </h1>
+<div>y = y2</div>
 
-    <div class="spacer"></div>
-    <audio controls style="width:100%; margin:2rem 0; opacity:.8;">
-  <source src="../assets/dead_prayer_machine.wav" type="audio/wav">
-  Votre navigateur ne supporte pas la lecture audio.
-</audio>
+<button onclick="play()">listen</button>
 
-    <p>
-dead_prayer_machine est un dispositif sonore fondé sur un protocole génératif autoréférentiel. À l’aide du modèle Jukebox, l’œuvre exploite non pas la génération musicale stylistique utilisée pour imiter des genres existants mais un processus de bouclage sans référent. Des fragments sonores trouvés, hors contexte musical identifié, sont introduits dans le système, exportés sous forme d’un premier fragment généré, puis réinjectés comme unique matière d’entraînement à chaque itération suivante. Aucune sélection de style n’est opérée ; le système travaille dans un espace sans identité musicale prédéfinie.
+<div style="margin-top:10px; font-size:12px; opacity:0.6;">
+each state replaces the previous one
+</div>
 
-Ce protocole produit des formes vocales et mélodiques ambiguës, des ébauches de paroles, des quasi-chants, des phrasés incomplets apparaissent sans jamais atteindre le seuil du langage articulé ni celui de la composition musicale. Le son donne l’impression d’une parole qui s’annonce constamment une voix sans locuteur, tendue vers une signification qui se dérobe au moment même où elle semble surgir. Cette instabilité correspond à un phénomène connu en apprentissage automatique : l’entraînement récursif d’un modèle sur ses propres générations conduit à une dégradation distributionnelle (collapse récursif), provoquant une érosion continue des structures produites (Shumailov et al., <em>The Curse of Recursion</em>, 2023).
+<audio id="player"></audio>
 
-L’ambiance d’auto-destruction perçue est ainsi à la fois techniquement opérante et esthétiquement active : le chant semble se dissoudre à mesure qu’il apparaît. Il n’y a ni narration sonore ni finalité expressive, mais une persistance disloquée marquée par l’illusion répétée d’une révélation sans événement.
+<script>
+function play() {
+  const audio = document.getElementById("player");
 
-Dans la tradition occidentale, la voix est pensée comme lieu privilégié de la présence (Derrida, <em>La Voix et le phénomène</em>, 1967). Dead_Prayer_Machine expose au contraire une voix privée de toute subjectivation. La trace y bascule hors de l’esthétique mémorielle : chaque génération sonore est produite pour être immédiatement altérée et dissoute par la suivante. La trace devient processus d’auto-différenciation ouvrant une persistance sans origine ni résolution, conformément à la temporalité de la trace décrite par Derrida (<em>De la grammatologie</em>, 1967).
+  // recharge à chaque clic (clé)
+  audio.src = "outputs/latest.wav?rand=" + Math.random();
 
-Dead_Prayer_Machine inscrit ainsi pleinement une esthétique du spectre non comme survivance du passé, mais comme illusion technique d’un sens à venir qui ne se réalise jamais. La spectralité devient l’effet direct d’un système produisant indéfiniment des effets de signification sans événements de signification (Fisher, <em>Ghosts of My Life</em>, 2014). L’œuvre ne produit pas un message, mais l’illusion persistante qu’un message va surgir. C’est cette dramaturgie de la révélation empêchée qui est spectrale.
-    </p>
+  audio.play();
+}
+</script>
 
-  </main>
-
-  <script>
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        entry.target.style.setProperty('--fade', entry.intersectionRatio.toFixed(2));
-      });
-    },{
-      threshold: Array.from({length:21},(_,i)=>i/20)
-    });
-
-    document.querySelectorAll('p').forEach(el=>{
-      el.setAttribute('data-fade','');
-      observer.observe(el);
-    });
-  </script>
 </body>
 </html>
+   

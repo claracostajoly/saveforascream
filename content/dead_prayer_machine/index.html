@@ -13,7 +13,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  height: 200vh; /* permet le scroll */
+  height: 200vh;
   margin: 0;
   padding-top: 120px;
 }
@@ -32,18 +32,9 @@ button:hover {
   color: black;
 }
 
-.small {
-  margin-top: 10px;
-  font-size: 12px;
-  opacity: 0.6;
-  text-align: center;
-}
-
-/* 🔲 bloc texte */
+/* texte */
 .meta {
   margin-top: 200px;
-  border: 1px solid white;
-  padding: 20px;
   max-width: 400px;
   font-size: 12px;
   line-height: 1.6;
@@ -70,10 +61,6 @@ button:hover {
 
 <button onclick="play()">listen</button>
 
-<div class="small">
-each state replaces the previous one
-</div>
-
 <div id="meta" class="meta hidden">
 each state replaces the previous one<br>
 the system runs continuously<br>
@@ -94,7 +81,6 @@ function play() {
   audio.play().catch(e => console.log(e));
 }
 
-/* apparition au scroll */
 window.addEventListener("scroll", () => {
   const block = document.getElementById("meta");
   const trigger = window.innerHeight * 0.8;
@@ -104,11 +90,6 @@ window.addEventListener("scroll", () => {
     block.classList.add("show");
   }
 });
-</script>
-
-</body>
-</html>
-}
 </script>
 
 </body>

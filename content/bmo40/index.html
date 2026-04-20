@@ -1,1 +1,86 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>All I Had To Do Was Wait</title>
 
+  <style>
+    :root{
+      --bg:#000;
+      --fg:#ccc;
+    }
+
+    html,body{
+      margin:0;
+      background:var(--bg);
+      color:var(--fg);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size:14px;
+    }
+
+    main{
+      max-width:680px;
+      margin:220px auto 160px;
+      padding:0 30px;
+    }
+
+    a{
+      color:var(--fg);
+      text-decoration:none;
+    }
+
+    h1{
+      font-size:clamp(12px,1.6vw,16px);
+      font-weight:400;
+      letter-spacing:0.02em;
+      margin:0;
+      margin-bottom:140px;
+      text-align:center;
+      color:var(--fg);
+      opacity:0.92;
+    }
+
+    h1 a{
+      color:inherit;
+    }
+
+    figure{
+      margin:140px 0;
+    }
+
+    figure img{
+      width:100%;
+      height:auto;
+      display:block;
+      background:#111;
+    }
+
+  </style>
+</head>
+
+<body>
+  <main>
+
+    <h1>
+      <a href="../../">All I Had To Do Was Wait</a>
+    </h1>
+
+    <figure>
+      <img src=".PNG" alt="">
+    </figure>
+
+    <figure>
+      <img src="../assets/images/wait-04.png" alt="">
+    </figure>
+
+  </main>
+
+  <script>
+    // double clic → ouvre la note
+    document.addEventListener("dblclick", () => {
+      window.location.href = "note.html";
+    });
+  </script>
+
+</body>
+</html>

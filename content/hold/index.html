@@ -23,7 +23,6 @@
       touch-action: none;
     }
 
-    /* Texte central, presque effacé */
     #text {
       max-width: 80%;
       font-size: 1rem;
@@ -44,7 +43,6 @@
       height:1.6em;
     }
 
-    /* Bruit */
     #noiseCanvas {
       position: absolute;
       inset: 0;
@@ -52,7 +50,7 @@
       height: 100%;
       pointer-events: none;
       mix-blend-mode: soft-light;
-      opacity: 0.05; /* plus discret */
+      opacity: 0.05;
     }
   </style>
 </head>
@@ -118,22 +116,17 @@
         noiseCtx.putImageData(imageData, 0, 0);
       }
 
-      // --- état dynamique ---
       let base = 0.04;
       let amplitude = 0.01;
       let t = 0;
 
-      // --- capteur lumière (si dispo) ---
       if ('AmbientLightSensor' in window) {
         try {
           const sensor = new AmbientLightSensor();
 
           sensor.addEventListener('reading', () => {
             const lux = sensor.illuminance;
-
             const norm = Math.min(lux / 1000, 1);
-
-            // mapping très doux
             base = 0.03 + norm * 0.05;
             amplitude = 0.006 + norm * 0.012;
           });
@@ -168,6 +161,13 @@
       resize();
       loop();
     })();
+  </script>
+
+  <!-- ✔️ ajout navigation -->
+  <script>
+    document.addEventListener("dblclick", () => {
+      window.location.href = "note.html";
+    });
   </script>
 
 </body>

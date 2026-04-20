@@ -9,7 +9,7 @@
   },
   {
     "title": "BLM1",
-    "path": "content/blmI/"
+    "path": "content/blm1/"
   },
   {
     "title": "BLM2",
@@ -17,7 +17,7 @@
   },
   {
     "title": "y = y2",
-    "path": "content/dead_prayer_machine/"
+    "path": "content/y-y2/"
   },
   {
     "title": "x_hausted",
@@ -53,7 +53,7 @@
   },
   {
     "title": "hold — note",
-    "path": "content/wholovesthesun-note/"
+    "path": "content/hold-note/"
   },
   {
     "title": "after / without",
@@ -61,5 +61,6 @@
   },
   {
     "title": "From: /To:",
-    "path": "content/from:/to:/"
- ]
+    "path": "content/from-to/"
+  }
+]

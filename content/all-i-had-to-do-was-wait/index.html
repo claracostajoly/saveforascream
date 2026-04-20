@@ -8,7 +8,6 @@
     :root{
       --bg:#000;
       --fg:#ccc;
-      --muted:#999;
     }
 
     html,body{
@@ -17,17 +16,17 @@
       color:var(--fg);
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       font-size:14px;
-      animation: fadeInSpectral 1.6s ease-out both;
-    }
 
-    @keyframes fadeInSpectral {
-      from { opacity: 0; filter: blur(2px); }
-      to { opacity: 1; filter: blur(0); }
+      /* ❌ suppression animation */
+      /* animation: fadeInSpectral 1.6s ease-out both; */
     }
 
     main{
       max-width:680px;
-      margin:80px auto 120px;
+
+      /* ⬇️ images plus basses */
+      margin:140px auto 160px;
+
       padding:0 30px;
     }
 
@@ -36,37 +35,24 @@
       text-decoration:none;
     }
 
+    /* 🔻 titre plus discret */
     h1{
-      font-size:clamp(16px,2vw,22px);
-      font-weight:500;
-      letter-spacing:.02em;
-      margin:1.2rem 0 .4rem;
+      font-size:13px;
+      font-weight:400;
+      letter-spacing:0.04em;
+      margin:0;
+      margin-bottom:120px;
       text-align:center;
+      opacity:0.6;
     }
 
+    /* ❌ supprimer logique texte animée */
     p{
-      line-height:1.65;
-      margin:0.9rem 0;
-      text-align:justify;
-      opacity:.82;
-      transition:opacity .6s ease, color .6s ease, text-shadow .6s ease;
-    }
-
-    p:hover{
-      opacity:1;
-      color:#ddd;
-      text-shadow:0 0 6px rgba(255,255,255,0.04);
-    }
-
-    .meta{
-      margin-bottom:3rem;
-      opacity:.7;
+      display:none;
     }
 
     figure{
-      position:relative;
-      margin:2.8rem 0;
-      overflow:hidden;
+      margin:140px 0; /* ⬇️ plus d’espace entre images */
     }
 
     figure img{
@@ -74,35 +60,24 @@
       height:auto;
       display:block;
       background:#111;
-      opacity:0;
-      transform:scale(1.01);
-      animation: fadeInSpectral 1.8s ease-out forwards;
-      transition: transform .35s ease, opacity .35s ease;
+
+      /* ❌ suppression effets */
+      opacity:1;
+      transform:none;
+      animation:none;
+      transition:none;
     }
 
     figure:hover img{
-      opacity:.96;
-      transform:scale(1.005);
-    }
-
-    figcaption{
-      display:none;
+      /* ❌ aucun effet au hover */
+      opacity:1;
+      transform:none;
     }
 
     .spacer{
-      height:8rem;
-      display:block;
+      height:0; /* ❌ plus de faux espacements */
     }
 
-    p[data-fade]{
-      opacity:var(--fade,1);
-      transition: opacity 2.5s ease, color 2.5s ease;
-    }
-
-    p[data-fade]:hover{
-      opacity:1 !important;
-      color:#eee;
-    }
   </style>
 </head>
 
@@ -113,41 +88,19 @@
       <a href="../../">All I Had to Do Was Wait</a>
     </h1>
 
-    <div class="spacer"></div>
-
     <figure>
-      <img src="../assets/images/wait-03.png" alt="Itération médiane du processus">
+      <img src="../assets/images/wait-03.png" alt="">
     </figure>
 
-    <div class="spacer"></div>
-
     <figure>
-      <img src="../assets/images/wait-04.png" alt="Itération avancée du processus">
+      <img src="../assets/images/wait-04.png" alt="">
     </figure>
 
-    <div class="spacer"></div>
-
     <figure>
-      <img src="../assets/images/wait-02.png" alt="Résidu final du processus">
+      <img src="../assets/images/wait-02.png" alt="">
     </figure>
-
-    <div class="spacer"></div><div class="spacer"></div>
 
   </main>
 
-  <script>
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        entry.target.style.setProperty('--fade', entry.intersectionRatio.toFixed(2));
-      });
-    },{
-      threshold: Array.from({length:21},(_,i)=>i/20)
-    });
-
-    document.querySelectorAll('p').forEach(el=>{
-      el.setAttribute('data-fade','');
-      observer.observe(el);
-    });
-  </script>
 </body>
 </html>

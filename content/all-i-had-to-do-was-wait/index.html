@@ -20,7 +20,7 @@
 
     main{
       max-width:680px;
-      margin:220px auto 160px; /* ⬇️ plus bas */
+      margin:220px auto 160px;
       padding:0 30px;
     }
 
@@ -29,7 +29,6 @@
       text-decoration:none;
     }
 
-    /* ✔️ même style que l’index */
     h1{
       font-size:clamp(12px,1.6vw,16px);
       font-weight:400;
@@ -63,7 +62,7 @@
   <main>
 
     <h1>
-      <a href="../../">All I Had To Do Was Wait_ notes</a>
+      <a href="../../">All I Had To Do Was Wait</a>
     </h1>
 
     <figure>
@@ -81,6 +80,7 @@
   </main>
 
   <script>
+    // double clic → ouvre la note
     document.addEventListener("dblclick", () => {
       window.location.href = "note.html";
     });

@@ -29,6 +29,19 @@
       max-width:680px;
       margin:80px auto 120px;
       padding:0 30px;
+      position:relative;
+      z-index:2;
+    }
+
+    canvas{
+      position:fixed;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      pointer-events:none;
+      z-index:1;
+      opacity:0.06; /* très faible */
     }
 
     a{
@@ -44,7 +57,6 @@
       text-align:center;
     }
 
-    /* ✅ centrage optique parfait du titre */
     h1 a{
       display:inline-block;
       text-align:center;
@@ -68,7 +80,6 @@
       display:none !important;
     }
 
-    /* pause forte avant le texte */
     .spacer{
       height:8rem;
       display:block;
@@ -87,43 +98,81 @@
 </head>
 
 <body>
-  <main>
 
-    <h1>
-      <a href="../../">wholovesthesun-note</a>
-    </h1>
+<canvas id="noise"></canvas>
 
-    <div class="spacer"></div>
+<main>
 
-    <p>
-wholovesthesun est une pièce web minimale qui interroge les conditions contemporaines de visibilité des images. Plutôt que d’augmenter la luminosité ou de « corriger » l’écran dans des situations de forte exposition solaire, le projet explore un principe perceptif contre-intuitif : l’ajout d’une couche de bruit visuel quasi imperceptible contribue à stabiliser un signal fragile au lieu de l’intensifier. Ce geste s’appuie sur des phénomènes documentés en sciences de la perception, notamment la résonance stochastique, selon laquelle l’introduction d’un bruit de faible amplitude peut améliorer la détection de signaux faiblement contrastés dans des environnements perturbés. Il trouve également des parallèles dans les technologies d’affichage e-ink, où des micro-textures assurent la lisibilité sans rétroéclairage actif, ainsi que dans les travaux de visualisation montrant comment des motifs discrets peuvent renforcer la persistance des formes sous éblouissement.
+  <h1>
+    <a href="../../">wholovesthesun-note</a>
+  </h1>
 
-Cependant, wholovesthesun ne vise ni une démonstration scientifique ni la production d’un outil fonctionnel. Il s’agit moins d’optimiser un dispositif que de déplacer notre rapport à l’image. Ce travail refuse la logique de la performance technologique (augmentation de luminance, saturation des contrastes) pour œuvrer à l’inverse une esthétique de la tenue minimale.
+  <div class="spacer"></div>
 
-L’image n’est ni réparée ni augmentée, elle est simplement maintenue dans sa fragilité.
+  <p>
+wholovesthesun est une pièce web minimale qui interroge les conditions contemporaines de visibilité des images. Plutôt que d’augmenter la luminosité ou de « corriger » l’écran dans des situations de forte exposition solaire, le projet explore un principe perceptif contre-intuitif : l’ajout d’une couche de bruit visuel quasi imperceptible contribue à stabiliser un signal fragile au lieu de l’intensifier. Ce geste s’appuie sur des phénomènes documentés en sciences de la perception, notamment la résonance stochastique, selon laquelle l’introduction d’un bruit de faible amplitude peut améliorer la détection de signaux faiblement contrastés dans des environnements perturbés. Il trouve également des parallèles dans les technologies d’affichage e-ink, où des micro-textures assurent la lisibilité sans rétroéclairage actif, ainsi que dans des travaux de visualisation montrant comment des motifs discrets peuvent renforcer la persistance des formes sous éblouissement.
 
-Dans un contexte marqué par la surexposition lumineuse et informationnelle, wholovesthesun propose une situation perceptive où l’écran cesse d’être un support de résolution pour devenir un milieu instable, menacé de disparition. L’intervention opérée, ce bruit léger, presque invisible, ne transforme pas l’image, il la fait tenir. Cette tenue fragile peut être pensée comme une forme de latence opératoire où les formes ne se stabilisent jamais pleinement.
+Cependant, wholovesthesun ne vise ni une démonstration scientifique ni la production d’un outil fonctionnel. Il s’agit moins d’optimiser un dispositif que de déplacer notre rapport à l’image. Ce travail refuse la logique de la performance technologique (augmentation de luminance, saturation des contrastes) pour œuvrer, à l’inverse, à une esthétique de la tenue minimale.
+
+L’image n’est ni réparée ni augmentée : elle est simplement maintenue dans sa fragilité.
+
+Dans un contexte marqué par la surexposition lumineuse et informationnelle, wholovesthesun propose une situation perceptive où l’écran cesse d’être un support de résolution pour devenir un milieu instable, menacé de disparition. L’intervention opérée — ce bruit léger, presque invisible — ne transforme pas l’image : il la fait tenir. Cette tenue fragile peut être pensée comme une forme de latence opératoire où les formes ne se stabilisent jamais pleinement.
 
 wholovesthesun vise à rendre perceptible la vulnérabilité conditionnelle des images plutôt que d’en augmenter la visibilité.
 
-L’absence d’interface de contrôle (aucun réglage, aucun outil manipulable) participe de cette logique. Le visiteur ne maîtrise pas le phénomène, il l’habite. L’adaptation du bruit à l’environnement réel ne relève pas d’une « intelligence » algorithmique au sens contemporain, mais d’une réponse situationnelle minimale. C’est un dispositif sans intention qui ajuste simplement la persistance du visible à l’état du milieu pour constituer un espace perceptif où texte et bruit se tiennent à la limite de la disparition.
-    </p>
+L’absence d’interface de contrôle (aucun réglage, aucun outil manipulable) participe de cette logique. Le visiteur ne maîtrise pas le phénomène : il l’habite. L’adaptation du bruit à l’environnement réel ne relève pas d’une « intelligence » algorithmique au sens contemporain, mais d’une réponse situationnelle minimale. C’est un dispositif sans intention qui ajuste simplement la persistance du visible à l’état du milieu, constituant un espace perceptif où texte et bruit se tiennent à la limite de la disparition.
+  </p>
 
-  </main>
+</main>
 
-  <script>
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        entry.target.style.setProperty('--fade', entry.intersectionRatio.toFixed(2));
-      });
-    },{
-      threshold: Array.from({length:21},(_,i)=>i/20)
-    });
+<script>
+/* fade scroll */
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    entry.target.style.setProperty('--fade', entry.intersectionRatio.toFixed(2));
+  });
+},{
+  threshold: Array.from({length:21},(_,i)=>i/20)
+});
 
-    document.querySelectorAll('p').forEach(el=>{
-      el.setAttribute('data-fade','');
-      observer.observe(el);
-    });
-  </script>
+document.querySelectorAll('p').forEach(el=>{
+  el.setAttribute('data-fade','');
+  observer.observe(el);
+});
+
+/* bruit minimal */
+
+const canvas = document.getElementById("noise");
+const ctx = canvas.getContext("2d");
+
+function resize(){
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener("resize", resize);
+
+let noiseLevel = 0.035; // très faible, stable
+
+function drawNoise(){
+  const img = ctx.createImageData(canvas.width, canvas.height);
+  const data = img.data;
+
+  for(let i = 0; i < data.length; i += 4){
+    const n = (Math.random() - 0.5) * 255 * noiseLevel;
+
+    data[i] = 128 + n;
+    data[i+1] = 128 + n;
+    data[i+2] = 128 + n;
+    data[i+3] = 18; // alpha très bas
+  }
+
+  ctx.putImageData(img, 0, 0);
+  requestAnimationFrame(drawNoise);
+}
+
+drawNoise();
+</script>
+
 </body>
 </html>

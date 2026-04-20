@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>wholovesthesun</title>
+  <title>hold</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <style>
     html, body {
@@ -39,10 +39,9 @@
       font-weight: 400;
     }
 
-    /* Espace poétique contrôlé */
     .gap{
       display:block;
-      height:1.6em; /* ≈ deux retours à la ligne visuels */
+      height:1.6em;
     }
 
     /* Bruit */
@@ -53,14 +52,14 @@
       height: 100%;
       pointer-events: none;
       mix-blend-mode: soft-light;
-      opacity: 0.07;
+      opacity: 0.05; /* plus discret */
     }
   </style>
 </head>
 <body>
 
   <div id="text">
-    <span class="title">wholovesthesun</span>
+    <span class="title">hold</span>
     <span class="gap"></span>
 
     making the image hold<br>
@@ -77,7 +76,7 @@
 
     <span class="gap"></span>
 
-    <span class="title">wholovesthesun</span><br>
+    <span class="title">hold</span><br>
     adds almost nothing<br>
     just enough noise<br>
     to keep the image
@@ -88,10 +87,11 @@
   <script>
     (function () {
       const canvas = document.getElementById('noiseCanvas');
-      const ctx = canvas.getContext('2d', { willReadFrequently: false });
+      const ctx = canvas.getContext('2d');
 
       const dpr = window.devicePixelRatio || 1;
       const noiseSize = 220;
+
       const noiseCanvas = document.createElement('canvas');
       const noiseCtx = noiseCanvas.getContext('2d');
       noiseCanvas.width = noiseSize;
@@ -106,6 +106,7 @@
       function generateNoise() {
         const imageData = noiseCtx.createImageData(noiseSize, noiseSize);
         const data = imageData.data;
+
         for (let i = 0; i < data.length; i += 4) {
           const v = 110 + Math.random() * 70;
           data[i] = v;
@@ -113,18 +114,41 @@
           data[i + 2] = v;
           data[i + 3] = 255;
         }
+
         noiseCtx.putImageData(imageData, 0, 0);
       }
 
+      // --- état dynamique ---
+      let base = 0.04;
+      let amplitude = 0.01;
       let t = 0;
+
+      // --- capteur lumière (si dispo) ---
+      if ('AmbientLightSensor' in window) {
+        try {
+          const sensor = new AmbientLightSensor();
+
+          sensor.addEventListener('reading', () => {
+            const lux = sensor.illuminance;
+
+            const norm = Math.min(lux / 1000, 1);
+
+            // mapping très doux
+            base = 0.03 + norm * 0.05;
+            amplitude = 0.006 + norm * 0.012;
+          });
+
+          sensor.start();
+        } catch (e) {
+          console.log("capteur non disponible");
+        }
+      }
 
       function loop() {
         t += 0.008;
 
         generateNoise();
 
-        const base = 0.045;
-        const amplitude = 0.012;
         const breathing = base + Math.sin(t) * amplitude;
         canvas.style.opacity = breathing.toFixed(3);
 

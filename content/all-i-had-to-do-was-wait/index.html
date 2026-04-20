@@ -16,17 +16,11 @@
       color:var(--fg);
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       font-size:14px;
-
-      /* ❌ suppression animation */
-      /* animation: fadeInSpectral 1.6s ease-out both; */
     }
 
     main{
       max-width:680px;
-
-      /* ⬇️ images plus basses */
       margin:140px auto 160px;
-
       padding:0 30px;
     }
 
@@ -35,24 +29,25 @@
       text-decoration:none;
     }
 
-    /* 🔻 titre plus discret */
+    /* ✔️ titre aligné avec la homepage */
     h1{
-      font-size:13px;
+      font-size:clamp(12px,1.6vw,16px);
       font-weight:400;
-      letter-spacing:0.04em;
+      letter-spacing:0.02em;
       margin:0;
-      margin-bottom:120px;
+      margin-bottom:140px;
       text-align:center;
-      opacity:0.6;
+      color:var(--fg);
+      opacity:0.92;
     }
 
-    /* ❌ supprimer logique texte animée */
-    p{
-      display:none;
+    /* ✔️ éviter toute variation de couleur du lien */
+    h1 a{
+      color:inherit;
     }
 
     figure{
-      margin:140px 0; /* ⬇️ plus d’espace entre images */
+      margin:140px 0;
     }
 
     figure img{
@@ -61,21 +56,9 @@
       display:block;
       background:#111;
 
-      /* ❌ suppression effets */
+      /* ✔️ aucune mise en scène */
       opacity:1;
       transform:none;
-      animation:none;
-      transition:none;
-    }
-
-    figure:hover img{
-      /* ❌ aucun effet au hover */
-      opacity:1;
-      transform:none;
-    }
-
-    .spacer{
-      height:0; /* ❌ plus de faux espacements */
     }
 
   </style>

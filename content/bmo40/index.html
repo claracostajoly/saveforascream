@@ -29,7 +29,6 @@
       text-decoration:none;
     }
 
-    /* titre cohérent avec ton système */
     h1{
       font-size:clamp(12px,1.6vw,16px);
       font-weight:400;
@@ -57,24 +56,24 @@
 <body>
   <main>
 
-    <!-- retour accueil -->
     <h1>
       <a href="/saveforascream/">bmo40</a>
     </h1>
 
     <div class="media">
-
-      <!-- 👉 OPTION IMAGE -->
-      <!-- <img src="../assets/images/bmo40.png" alt=""> -->
-
-      <!-- 👉 OPTION VIDÉO -->
       <video autoplay muted loop playsinline>
         <source src="../assets/video/bmo40.mp4" type="video/mp4">
       </video>
-
     </div>
 
   </main>
+
+  <!-- ✅ AJOUT IMPORTANT -->
+  <script>
+    document.addEventListener("dblclick", () => {
+      window.location.href = "note.html";
+    });
+  </script>
 
 </body>
 </html>

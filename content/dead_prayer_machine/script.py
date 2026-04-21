@@ -4,7 +4,7 @@ import soundfile as sf
 import os
 import random
 
-OUTPUT_PATH = "content/dead_prayer_machine/outputs/latest.wav"
+OUTPUT_PATH = "content/y-y2/outputs/latest.wav"
 
 sr = 22050
 duration = 20

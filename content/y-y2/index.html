@@ -1,236 +1,93 @@
-<!doctype html>
-<html lang="fr">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>saveforascream</title>
-  <style>
-    :root{ --bg:#000; --fg:#ddd; --muted:#a8a8a8; }
+<meta charset="UTF-8">
+<title>y = y2</title>
+<style>
+body {
+  background:black;
+  color:white;
+  font-family:Arial, sans-serif;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  height:200vh;
+  margin:0;
+  padding-top:120px;
+}
 
-    html,body{
-      height:100%;
-      margin:0;
-      background:var(--bg);
-      color:var(--fg);
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      overflow:hidden;
-    }
+button {
+  margin-top:20px;
+  padding:10px 20px;
+  background:none;
+  border:1px solid white;
+  color:white;
+  cursor:pointer;
+}
 
-    a{ color:var(--fg); text-decoration:none }
+button:hover {
+  background:white;
+  color:black;
+}
 
-    /* Titre central */
-    #titre{
-      position:fixed;
-      left:50%; top:50%;
-      transform:translate(-50%,-50%);
-      font-size:clamp(28px,6vw,64px);
-      letter-spacing:.02em;
-      white-space:nowrap;
-      cursor:pointer;
-      user-select:none;
-      z-index:10;              /* au-dessus des titres */
-    }
+.meta {
+  margin-top:200px;
+  max-width:400px;
+  font-size:12px;
+  line-height:1.6;
+  text-align:left;
+}
 
-    /* Conteneur plein écran pour la nébuleuse */
-    #row{
-      position:fixed;
-      inset:0;
-      visibility:hidden;
-      opacity:0;
-      transition:opacity .25s ease;
-      z-index:1;               /* sous le titre */
-      pointer-events:none;     /* laisse passer les clics vers #titre */
-    }
-    #row.shown{
-      visibility:visible;
-      opacity:1;
-    }
+.hidden {
+  opacity:0;
+  transform:translateY(40px);
+  transition:all 1s ease;
+}
 
-    /* Chaque titre d’œuvre */
-    .entry{
-      position:absolute;
-      font-size:clamp(12px,1.6vw,16px);
-      white-space:nowrap;
-      opacity:.92;
-      transition:
-        color .25s ease,
-        opacity .2s ease,
-        transform .25s ease;
-      padding:.1rem .2rem;
-      pointer-events:auto;     /* les liens restent cliquables */
-    }
-    .entry:hover{
-      opacity:1;
-    }
-
-    .admin{
-      position:fixed;
-      right:14px; bottom:10px;
-      font-size:12px;
-      color:var(--muted);
-      z-index:11;
-    }
-  </style>
+.show {
+  opacity:1;
+  transform:translateY(0);
+}
+</style>
 </head>
+
 <body>
-  <div id="titre">saveforascream</div>
 
-  <!-- les titres d’œuvres seront injectés ici -->
-  <div id="row" aria-live="polite"></div>
+<div>y = y2</div>
 
-  <a class="admin" href="admin.html">admin</a>
+<button onclick="play()">listen</button>
 
-  <script>
-    const JSON_PATH = '../index.json';
-    const titre = document.getElementById('titre');
-    const row   = document.getElementById('row');
+<div id="meta" class="meta hidden">
+each state replaces the previous one<br>
+the system runs continuously<br>
+it starts from noise<br>
+each iteration transforms the signal<br>
+each result becomes the next input<br>
+the system runs independently<br>
+only the current state is accessible
+</div>
 
-    let works = [];     // données index.json
-    let shown = false;  // nébuleuse déjà affichée ?
+<audio id="player"></audio>
 
-    function rand(min,max){ return Math.random() * (max - min) + min; }
+<script>
+function play() {
+  const audio = document.getElementById("player");
+  audio.src = "./outputs/latest.wav?v=" + Date.now();
+  audio.load();
+  audio.play().catch(e => console.log(e));
+}
 
-    function shuffle(array){
-      for(let i = array.length - 1; i > 0; i--){
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-      return array;
-    }
+window.addEventListener("scroll", () => {
+  const block = document.getElementById("meta");
+  const trigger = window.innerHeight * 0.8;
+  const rect = block.getBoundingClientRect();
 
-    // place les titres aléatoirement, tous à des hauteurs (y) distinctes,
-    // ET loin de leur précédente position pour que le changement soit visible
-    function scatter(){
-      const entries = Array.from(row.children);
-      if (!entries.length) return;
+  if (rect.top < trigger) {
+    block.classList.add("show");
+  }
+});
+</script>
 
-      const W = window.innerWidth;
-      const H = window.innerHeight;
-      const margin = 24;
-
-      // zone interdite autour du titre central
-      const tRect = titre.getBoundingClientRect();
-      const pad = 32;
-      const forbid = {
-        left:   tRect.left   - pad,
-        right:  tRect.right  + pad,
-        top:    tRect.top    - pad,
-        bottom: tRect.bottom + pad
-      };
-
-      // ordre aléatoire
-      shuffle(entries);
-      entries.forEach(e => row.appendChild(e));
-
-      const usedY = [];
-      const minYSpacing = 28;   // écart vertical minimum entre titres
-      const minMoveDist = 40;   // distance minimale par rapport à l’ancienne position
-
-      entries.forEach(el => {
-        const w = el.offsetWidth || 80;
-        const h = el.offsetHeight || 20;
-
-        // ancienne position (si elle existe)
-        const prevX = el.dataset.x ? parseFloat(el.dataset.x) : null;
-        const prevY = el.dataset.y ? parseFloat(el.dataset.y) : null;
-
-        let x, y, tries = 0;
-
-        while (true) {
-          x = rand(margin, W - w - margin);
-          y = rand(margin, H - h - margin);
-
-          const left = x;
-          const right = x + w;
-          const top = y;
-          const bottom = y + h;
-
-          // éviter la zone du titre
-          const overlapTitle =
-            !(right < forbid.left ||
-              left  > forbid.right ||
-              bottom < forbid.top ||
-              top > forbid.bottom);
-
-          if (overlapTitle && tries < 50) {
-            tries++;
-            continue;
-          }
-
-          // éviter de retomber sur la même "ligne" qu’un autre titre
-          let tooCloseY = false;
-          for (const yUsed of usedY) {
-            if (Math.abs(y - yUsed) < minYSpacing) {
-              tooCloseY = true;
-              break;
-            }
-          }
-          if (tooCloseY && tries < 80) {
-            tries++;
-            continue;
-          }
-
-          // s’éloigner clairement de l’ancienne position
-          if (prevX !== null && prevY !== null) {
-            const dist = Math.hypot(x - prevX, y - prevY);
-            if (dist < minMoveDist && tries < 100) {
-              tries++;
-              continue;
-            }
-          }
-
-          usedY.push(y);
-          break;
-        }
-
-        // mémoriser la nouvelle position
-        el.dataset.x = x;
-        el.dataset.y = y;
-
-        el.style.transform = `translate(${x}px, ${y}px)`;
-      });
-    }
-
-    function buildEntries(){
-      row.innerHTML = '';
-      works.forEach(it => {
-        const a = document.createElement('a');
-        a.className = 'entry';
-        a.textContent = it.title;
-        a.href = it.path;
-        a.target = '_self';
-        row.appendChild(a);
-      });
-    }
-
-    // Clic sur le titre : fait apparaître / remélange la nébuleuse
-    titre.addEventListener('click', () => {
-      // si les données ne sont pas encore arrivées, on attend
-      if (!works.length) return;
-
-      if (!shown){
-        buildEntries();
-        row.classList.add('shown');
-        shown = true;
-      }
-      requestAnimationFrame(scatter);
-    });
-
-    // Au resize, on recalcule la dispersion si elle est visible
-    window.addEventListener('resize', () => {
-      if (shown) scatter();
-    });
-
-    // Chargement des données depuis content/index.json
-    fetch(JSON_PATH + '?_=' + Date.now())
-      .then(r => r.json())
-      .then(list => {
-        works = list;
-      })
-      .catch(() => {
-        // fallback si jamais index.json pose problème
-        works = [{ title: 'error loading index.json', path: '#' }];
-      });
-  </script>
 </body>
 </html>

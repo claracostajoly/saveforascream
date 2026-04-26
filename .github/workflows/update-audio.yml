@@ -21,7 +21,7 @@ jobs:
           pip install numpy librosa soundfile
 
       - name: Run script
-        run: python content/dead_prayer_machine/script.py
+        run: python content/y-y2/script.py
 
       - name: Commit and push
         run: |

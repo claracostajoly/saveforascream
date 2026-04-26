@@ -28,7 +28,7 @@ jobs:
           git config --global user.name "github-actions"
           git config --global user.email "actions@github.com"
 
-          git add content/dead_prayer_machine/outputs/latest.wav
+          git add content/y-y2/outputs/latest.wav
 
           git commit -m "update audio" || echo "no changes"
 

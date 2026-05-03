@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <title>LUTHERIE OF NOTHINGNESS</title>
@@ -21,8 +21,9 @@
         STATUS: [ IDLE / RESIDUAL ]<br>
         SOURCE: COMPUTATIONAL NOISE (32-BIT FLOAT)<br>
         BODY: DUAL VIRTUAL RESONATORS<br><br>
-        The electric guitar sound you perceive is an emergent property of the feedback loop. 
-        There is no instrument. There is no input. Only the vibration of the system’s own limits.
+        Le son n'est pas un instrument, mais une vibration endogène. 
+        À +30dB, le silence numérique devient une masse physique. 
+        C'est l'après (After) et le sans (Without).
     </div>
 
     <canvas id="scope"></canvas>
@@ -37,12 +38,13 @@
     document.getElementById('btn').onclick = function() {
         if (!audioCtx) setupAudio();
         if (!isRunning) {
-            audioCtx.resume();
-            startSystem();
-            this.innerText = "[ TERMINATE ]";
-            document.getElementById('status-text').innerText = "SYSTEM_RUNNING_RESIDUAL_FLOW";
-            isRunning = true;
-            draw();
+            audioCtx.resume().then(() => {
+                startSystem();
+                this.innerText = "[ TERMINATE ]";
+                document.getElementById('status-text').innerText = "SYSTEM_RUNNING_RESIDUAL_FLOW";
+                isRunning = true;
+                draw();
+            });
         } else { location.reload(); }
     };
 
@@ -56,6 +58,7 @@
     }
 
     function startSystem() {
+        // 1. SOURCE (Bruit de base)
         const bufferSize = audioCtx.sampleRate * 2;
         const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
         const data = buffer.getChannelData(0);
@@ -66,19 +69,38 @@
         const noiseGain = audioCtx.createGain();
         noiseGain.gain.value = 0.002;
 
+        // 2. RÉSONATEURS (Ce qui crée la note/tenue)
         const delay1 = audioCtx.createDelay(); delay1.delayTime.value = 0.003; 
         const delay2 = audioCtx.createDelay(); delay2.delayTime.value = 0.0031;
-        const feedback = audioCtx.createGain(); feedback.gain.value = 0.93; 
+        const feedback = audioCtx.createGain(); feedback.gain.value = 0.94; 
+
+        // 3. TEXTURE (Le filtre qui rend le son sombre et massif)
+        const lpFilter = audioCtx.createBiquadFilter();
+        lpFilter.type = "lowpass";
+        lpFilter.frequency.value = 3500; 
+
+        // 4. DYNAMIQUE (Le compresseur qui écrase le silence)
+        const compressor = audioCtx.createDynamicsCompressor();
+        compressor.threshold.setValueAtTime(-30, audioCtx.currentTime);
+        compressor.ratio.setValueAtTime(12, audioCtx.currentTime);
 
         const masterGain = audioCtx.createGain();
         masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
-        masterGain.gain.linearRampToValueAtTime(1.2, audioCtx.currentTime + 2);
+        masterGain.gain.linearRampToValueAtTime(1.5, audioCtx.currentTime + 3);
 
+        // --- ROUTAGE ---
         noise.connect(noiseGain);
-        noiseGain.connect(delay1); delay1.connect(delay2); delay2.connect(feedback); feedback.connect(delay1);
-        delay2.connect(analyser);
+        noiseGain.connect(delay1);
+        delay1.connect(delay2);
+        delay2.connect(feedback);
+        feedback.connect(delay1); 
+        
+        delay2.connect(lpFilter);
+        lpFilter.connect(compressor);
+        compressor.connect(analyser); // Pour l'oscilloscope
         analyser.connect(masterGain);
         masterGain.connect(audioCtx.destination);
+
         noise.start();
     }
 
@@ -88,7 +110,7 @@
         canvasCtx.fillStyle = '#000';
         canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
         canvasCtx.lineWidth = 1;
-        canvasCtx.strokeStyle = '#444'; // La ligne grise/orange discrète
+        canvasCtx.strokeStyle = '#444'; 
         canvasCtx.beginPath();
         let sliceWidth = canvas.width * 1.0 / analyser.frequencyBinCount;
         let x = 0;

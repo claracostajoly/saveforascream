@@ -2,99 +2,106 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>After / Without</title>
+    <title>After / Without - Live</title>
     <style>
-        body { background: #000; color: #444; font-family: monospace; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; text-transform: uppercase; }
-        .header { font-size: 11px; letter-spacing: 2px; margin-bottom: 20px; color: #666; }
-        button { background: none; border: 1px solid #333; color: #555; padding: 15px 30px; cursor: pointer; font-family: monospace; transition: 0.2s; z-index: 10; }
-        button:hover { border-color: #ff6600; color: #ff6600; }
-        #status { font-size: 9px; margin-top: 20px; color: #222; }
+        body { background: #000; color: #333; font-family: monospace; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        button { background: none; border: 1px solid #222; color: #555; padding: 15px; cursor: pointer; font-family: monospace; transition: 0.3s; }
+        button:hover { border-color: #444; color: #888; }
+        #status { font-size: 10px; margin-top: 20px; letter-spacing: 2px; }
     </style>
 </head>
 <body>
 
-    <div class="header">AFTER / WITHOUT - SIGNAL FLOW</div>
-    <button id="btn">[ INITIALIZE SYSTEM ]</button>
-    <div id="status">STATUS: IDLE</div>
+    <button id="btn">ACTIVER LA TENUE RÉSIDUELLE</button>
+    <div id="status">SYSTÈME : VEILLE</div>
 
     <script>
     let audioCtx;
     let isRunning = false;
 
-    document.getElementById('btn').addEventListener('click', function() {
+    document.getElementById('btn').onclick = function() {
         if (!audioCtx) {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
+
         if (!isRunning) {
             audioCtx.resume().then(() => {
-                runAfterWithout();
-                this.innerText = "[ TERMINATE SYSTEM ]";
-                document.getElementById('status').innerText = "STATUS: ACTIVE (GRAIN & RESONANCE)";
+                startSystem();
+                this.innerText = "COUPER LE SYSTÈME";
+                document.getElementById('status').innerText = "SYSTÈME : ACTIF (FLUX RÉSIDUEL)";
                 isRunning = true;
             });
         } else {
             location.reload(); 
         }
-    });
+    };
 
-    function runAfterWithout() {
+    function startSystem() {
         const now = audioCtx.currentTime;
 
-        // 1. SOURCE : BRUIT PLUS "GRAIN" (On réduit l'amplitude aléatoirement)
-        const bufferSize = 2 * audioCtx.sampleRate;
-        const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-        const output = noiseBuffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-            // Un bruit moins linéaire, plus "digital grit"
-            output[i] = (Math.random() * 2 - 1) * (Math.random() > 0.9 ? 0.02 : 0.005); 
-        }
-        const source = audioCtx.createBufferSource();
-        source.buffer = noiseBuffer;
-        source.loop = true;
+        // 1. SOURCE : Bruit Blanc (plus riche en fréquences "sales")
+        const bufferSize = audioCtx.sampleRate * 2;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        noise.loop = true;
 
-        // 2. FILTRE ANTI-INFRASON (High Pass)
-        // C'est ce qui va enlever la pression désagréable dans les basses
-        const hpFilter = audioCtx.createBiquadFilter();
-        hpFilter.type = "highpass";
-        hpFilter.frequency.value = 150; 
+        const noiseGain = audioCtx.createGain();
+        noiseGain.gain.value = 0.005;
 
-        // 3. RÉSONATEUR INSTABLE (Pour éviter l'effet guitare)
-        const delay = audioCtx.createDelay();
-        delay.delayTime.value = 0.0022; 
+        // 2. RÉSONATEURS DÉSACCORDÉS (Éviter l'effet guitare)
+        // On utilise des valeurs qui ne sont pas multiples l'une de l'autre
+        const delay1 = audioCtx.createDelay();
+        delay1.delayTime.value = 0.00731; // Plus long et "inharmonique"
+        
+        const delay2 = audioCtx.createDelay();
+        delay2.delayTime.value = 0.01137; // Valeur décalée pour créer de la texture, pas une note
 
-        // MODULATION DU DÉLAI (LFO aléatoire pour casser la note fixe)
-        const lfo = audioCtx.createOscillator();
-        const lfoGain = audioCtx.createGain();
-        lfo.type = 'sawtooth'; // Forme d'onde plus agressive pour le grain
-        lfo.frequency.value = 8; // Vitesse du grain
-        lfoGain.gain.value = 0.0002; 
-        lfo.connect(lfoGain);
-        lfoGain.connect(delay.delayTime);
-        lfo.start();
+        // 3. MICRO-MODULATION (Le secret pour le rendu "Erosion/Souffle")
+        // On fait vibrer très légèrement le temps de délai pour "étaler" le son
+        const jitter = audioCtx.createOscillator();
+        const jitterGain = audioCtx.createGain();
+        jitter.type = 'sine';
+        jitter.frequency.value = 0.5; // Très lent
+        jitterGain.gain.value = 0.0005; // Très subtil
+        jitter.connect(jitterGain);
+        jitterGain.connect(delay1.delayTime);
+        jitterGain.connect(delay2.delayTime);
+        jitter.start();
 
         const feedback = audioCtx.createGain();
-        feedback.gain.value = 0.93; 
+        feedback.gain.value = 0.88; // Un peu moins de feedback pour éviter le sifflement pur
 
-        // 4. CHAINE DE SORTIE
+        // 4. FILTRE DE TEXTURE (Couper les extrêmes)
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = "bandpass"; // On isole une bande pour créer un souffle focalisé
+        filter.frequency.value = 2200;
+        filter.Q.value = 0.7;
+
+        // 5. MASTER & FADE-IN (Anti-Pop)
         const compressor = audioCtx.createDynamicsCompressor();
-        compressor.threshold.setValueAtTime(-40, now);
+        compressor.threshold.setValueAtTime(-24, now);
         compressor.ratio.setValueAtTime(12, now);
 
-        const gainNode = audioCtx.createGain();
-        gainNode.gain.setValueAtTime(0, now); 
-        gainNode.gain.linearRampToValueAtTime(25, now + 2); // Montée douce
+        const masterGain = audioCtx.createGain();
+        masterGain.gain.setValueAtTime(0, now);
+        masterGain.gain.linearRampToValueAtTime(1.2, now + 2); // Montée en 2 secondes
 
-        // ROUTAGE
-        source.connect(hpFilter);
-        hpFilter.connect(delay);
-        delay.connect(feedback);
-        feedback.connect(delay); 
+        // --- ROUTAGE ---
+        noise.connect(noiseGain);
+        noiseGain.connect(filter);
+        filter.connect(delay1);
+        delay1.connect(delay2);
+        delay2.connect(feedback);
+        feedback.connect(delay1); // Boucle de feedback
         
-        delay.connect(compressor);
-        compressor.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
+        delay2.connect(compressor);
+        compressor.connect(masterGain);
+        masterGain.connect(audioCtx.destination);
 
-        source.start();
+        noise.start();
     }
     </script>
 </body>

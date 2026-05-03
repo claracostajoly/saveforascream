@@ -1,73 +1,62 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
+    <meta charset="UTF-8">
     <title>After / Without - Live</title>
     <style>
         body { background: #000; color: #444; font-family: monospace; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        button { background: none; border: 1px solid #333; color: #777; padding: 15px; cursor: pointer; font-family: monospace; margin-bottom: 20px; }
+        button { background: none; border: 1px solid #333; color: #777; padding: 15px; cursor: pointer; font-family: monospace; }
         button:hover { border-color: #666; color: #aaa; }
-        #status { font-size: 10px; letter-spacing: 1px; }
     </style>
 </head>
 <body>
 
-    <button id="power-btn">ACTIVER LA TENUE RÉSIDUELLE</button>
-    <div id="status">ÉTAT : VEILLE HORS-TENSION</div>
+    <button id="btn">ACTIVER LA TENUE RÉSIDUELLE</button>
+    <p id="status" style="font-size: 10px; margin-top: 20px;">ÉTAT : VEILLE</p>
 
     <script>
-    let audioCtx;
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
     let isRunning = false;
 
-    document.getElementById('power-btn').addEventListener('click', function() {
-        if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-
+    document.getElementById('btn').onclick = function() {
         if (!isRunning) {
-            audioCtx.resume();
+            ctx.resume();
             startAfterWithout();
             this.innerText = "COUPER LE SYSTÈME";
-            document.getElementById('status').innerText = "ÉTAT : FONCTIONNEMENT RÉSIDUEL ACTIF";
+            document.getElementById('status').innerText = "ÉTAT : FONCTIONNEMENT RÉSIDUEL";
             isRunning = true;
         } else {
-            // Recharge la page pour tout couper proprement
-            location.reload();
+            location.reload(); 
         }
-    });
+    };
 
     function startAfterWithout() {
-        // 1. Source : Bruit de fond très fin
-        const whiteNoise = audioCtx.createBufferSource();
-        const bufferSize = 2 * audioCtx.sampleRate;
-        const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const whiteNoise = ctx.createBufferSource();
+        const bufferSize = 2 * ctx.sampleRate;
+        const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
         const data = noiseBuffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 0.005; }
         whiteNoise.buffer = noiseBuffer;
         whiteNoise.loop = true;
 
-        // 2. Simulation CORPUS (Comb Filter / Résonance métallique)
-        const delay = audioCtx.createDelay();
+        const delay = ctx.createDelay();
         delay.delayTime.value = 0.0022; 
-        const feedback = audioCtx.createGain();
-        feedback.gain.value = 0.94; // Juste sous la limite du larsen incontrôlable
+        const feedback = ctx.createGain();
+        feedback.gain.value = 0.94; 
 
-        // 3. COMPRESSION + GAIN (+30dB comme sur ta capture Capture d’écran 2026-05-03 à 22.28.32.jpg)
-        const compressor = audioCtx.createDynamicsCompressor();
-        compressor.threshold.setValueAtTime(-50, audioCtx.currentTime);
-        compressor.ratio.setValueAtTime(12, audioCtx.currentTime);
+        const compressor = ctx.createDynamicsCompressor();
+        compressor.threshold.setValueAtTime(-50, ctx.currentTime);
+        compressor.ratio.setValueAtTime(12, ctx.currentTime);
         
-        const makeUpGain = audioCtx.createGain();
+        const makeUpGain = ctx.createGain();
         makeUpGain.gain.value = 40; 
 
-        // ROUTAGE (Le circuit fermé)
         whiteNoise.connect(delay);
         delay.connect(feedback);
         feedback.connect(delay); 
-        
-        // Sortie vers le Master (Compresseur + Gain)
         delay.connect(compressor);
         compressor.connect(makeUpGain);
-        makeUpGain.connect(audioCtx.destination);
+        makeUpGain.connect(ctx.destination);
 
         whiteNoise.start();
     }

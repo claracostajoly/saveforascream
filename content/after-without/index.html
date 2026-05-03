@@ -1,1 +1,84 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>After / Without - Live</title>
+    <style>
+        body { background: #000; color: #444; font-family: monospace; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; text-transform: uppercase; }
+        .header { font-size: 11px; letter-spacing: 2px; margin-bottom: 20px; color: #666; }
+        button { background: none; border: 1px solid #333; color: #555; padding: 15px 30px; cursor: pointer; font-family: monospace; transition: 0.2s; }
+        button:hover { border-color: #ff6600; color: #ff6600; }
+        #status { font-size: 9px; margin-top: 20px; color: #222; }
+    </style>
+</head>
+<body>
 
+    <div class="header">AFTER / WITHOUT - SIGNAL FLOW</div>
+
+    <button id="btn">[ ACTIVER LE SYSTÈME ]</button>
+    
+    <div id="status">ÉTAT : VEILLE RÉSIDUELLE</div>
+
+    <script>
+    let ctx;
+    let isRunning = false;
+
+    document.getElementById('btn').onclick = function() {
+        if (!ctx) {
+            ctx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        if (!isRunning) {
+            ctx.resume().then(() => {
+                startAfterWithout();
+                this.innerText = "[ COUPER LE SYSTÈME ]";
+                document.getElementById('status').innerText = "ÉTAT : FONCTIONNEMENT (GAIN +40dB)";
+                isRunning = true;
+            });
+        } else {
+            location.reload(); 
+        }
+    };
+
+    function startAfterWithout() {
+        // --- 1. SOURCE : BRUIT DE FOND TRÈS FIN (L'EROSION) ---
+        const bufferSize = 2 * ctx.sampleRate;
+        const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) { 
+            data[i] = Math.random() * 0.005; // Niveau très bas pour être "révélé" par le gain
+        }
+        const whiteNoise = ctx.createBufferSource();
+        whiteNoise.buffer = noiseBuffer;
+        whiteNoise.loop = true;
+
+        // --- 2. RÉSONATEUR : DELAY (LE CORPUS) ---
+        const delay = ctx.createDelay();
+        delay.delayTime.value = 0.0022; // Fréquence de la résonance métallique
+
+        const feedback = ctx.createGain();
+        feedback.gain.value = 0.95; // Intensité de la résonance
+
+        // --- 3. COMPRESSION + GAIN (+40dB COMME SUR LA CAPTURE) ---
+        const compressor = ctx.createDynamicsCompressor();
+        compressor.threshold.setValueAtTime(-50, ctx.currentTime);
+        compressor.ratio.setValueAtTime(12, ctx.currentTime);
+        
+        const makeUpGain = ctx.createGain();
+        makeUpGain.gain.value = 40; // Gain massif pour faire remonter le bruit
+
+        // --- ROUTAGE EN BOUCLE POUR LE CORPUS (FIGURÉ SUR TA CAPTURE) ---
+        whiteNoise.connect(delay);
+        delay.connect(feedback);
+        feedback.connect(delay); // Boucle de feedback
+        
+        // --- SORTIE VERS LA CHAÎNE FINALE ---
+        delay.connect(compressor);
+        compressor.connect(makeUpGain);
+        makeUpGain.connect(ctx.destination);
+
+        whiteNoise.start();
+    }
+    </script>
+</body>
+</html>

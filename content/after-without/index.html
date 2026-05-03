@@ -20,12 +20,10 @@
     <div id="status">STATUS: IDLE</div>
 
     <script>
-    // On déclare les variables globalement pour éviter les erreurs de portée
     let audioCtx;
     let isRunning = false;
 
     document.getElementById('btn').addEventListener('click', function() {
-        // Initialisation de l'AudioContext au premier clic (obligatoire sur Chrome/Safari)
         if (!audioCtx) {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
@@ -39,7 +37,6 @@
                 isRunning = true;
             });
         } else {
-            // Un deuxième clic recharge la page pour tout couper proprement
             location.reload(); 
         }
     });
@@ -63,19 +60,23 @@
         const feedback = audioCtx.createGain();
         feedback.gain.value = 0.95; 
 
-        // 3. CHAINE DE GAIN MASSIF ET COMPRESSION
+        // 3. CHAINE DE GAIN ET COMPRESSION
         const compressor = audioCtx.createDynamicsCompressor();
         compressor.threshold.setValueAtTime(-50, audioCtx.currentTime);
         compressor.knee.setValueAtTime(40, audioCtx.currentTime);
         compressor.ratio.setValueAtTime(12, audioCtx.currentTime);
 
         const gainNode = audioCtx.createGain();
-        gainNode.gain.value = 35; // Gain de sortie puissant
+        
+        // --- CORRECTION DU POP : FADE-IN PROGRESSIF ---
+        const now = audioCtx.currentTime;
+        gainNode.gain.setValueAtTime(0, now); 
+        gainNode.gain.linearRampToValueAtTime(35, now + 1.5); // Monte à 35 en 1.5 seconde
 
         // ROUTAGE
         source.connect(delay);
         delay.connect(feedback);
-        feedback.connect(delay); // Boucle de feedback infinie
+        feedback.connect(delay); 
         
         delay.connect(compressor);
         compressor.connect(gainNode);

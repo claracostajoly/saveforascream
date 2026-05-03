@@ -4,16 +4,16 @@
     <meta charset="UTF-8">
     <title>After / Without - Live</title>
     <style>
-        body { background: #000; color: #444; font-family: monospace; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        button { background: none; border: 1px solid #333; color: #777; padding: 15px; cursor: pointer; font-family: monospace; }
-        button:hover { border-color: #fff; color: #fff; }
-        #status { font-size: 10px; margin-top: 20px; color: #222; }
+        body { background: #000; color: #333; font-family: monospace; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        button { background: none; border: 1px solid #222; color: #555; padding: 15px; cursor: pointer; font-family: monospace; transition: 0.3s; }
+        button:hover { border-color: #444; color: #888; }
+        #status { font-size: 10px; margin-top: 20px; letter-spacing: 2px; }
     </style>
 </head>
 <body>
 
-    <button id="btn">ACTIVER LE DISPOSITIF</button>
-    <div id="status">SYSTÈME EN ATTENTE</div>
+    <button id="btn">ACTIVER LA TENUE RÉSIDUELLE</button>
+    <div id="status">SYSTÈME : VEILLE</div>
 
     <script>
     let audioCtx;
@@ -28,8 +28,7 @@
             audioCtx.resume().then(() => {
                 startSystem();
                 this.innerText = "COUPER LE SYSTÈME";
-                document.getElementById('status').innerText = "TENUE RÉSIDUELLE ACTIVE";
-                document.getElementById('status').style.color = "#444";
+                document.getElementById('status').innerText = "SYSTÈME : ACTIF (TENUE RÉSIDUELLE)";
                 isRunning = true;
             });
         } else {
@@ -38,38 +37,50 @@
     };
 
     function startSystem() {
-        // 1. Source (Bruit très faible pour simuler l'Erosion)
-        const noise = audioCtx.createOscillator();
-        noise.type = 'sawtooth'; // Plus riche en harmoniques pour le Corpus
-        noise.frequency.value = 50; 
-        
+        // 1. Source : Bruit Blanc (plus proche de l'Erosion que l'oscillateur)
+        const bufferSize = audioCtx.sampleRate * 2;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        noise.loop = true;
+
         const noiseGain = audioCtx.createGain();
-        noiseGain.gain.value = 0.001; // Presque inaudible au départ
+        noiseGain.gain.value = 0.002; // Très faible excitation
 
-        // 2. RÉSONATEUR (Le Corpus de Capture d’écran 2026-05-03 à 22.28.43.jpg)
-        const delay = audioCtx.createDelay();
-        delay.delayTime.value = 0.005; // Résonance basse/mid
+        // 2. DOUBLE RÉSONATEUR (Pour éviter l'effet guitare et créer une nappe)
+        const delay1 = audioCtx.createDelay();
+        delay1.delayTime.value = 0.003; 
+        const delay2 = audioCtx.createDelay();
+        delay2.delayTime.value = 0.0031; // Très léger décalage pour créer du battement organique
+        
         const feedback = audioCtx.createGain();
-        feedback.gain.value = 0.9; // Stable
+        feedback.gain.value = 0.93; 
 
-        // 3. GATE + COMPRESSION (Capture d’écran 2026-05-03 à 22.28.32.jpg)
+        // 3. FILTRE DE TEXTURE (EQ Eight sur ton setup)
+        const lpFilter = audioCtx.createBiquadFilter();
+        lpFilter.type = "lowpass";
+        lpFilter.frequency.value = 3500; // On adoucit les aigus agressifs
+
+        // 4. COMPREESION & LIMITATION (Master)
         const compressor = audioCtx.createDynamicsCompressor();
-        compressor.threshold.setValueAtTime(-40, audioCtx.currentTime);
-        compressor.knee.setValueAtTime(40, audioCtx.currentTime);
+        compressor.threshold.setValueAtTime(-30, audioCtx.currentTime);
         compressor.ratio.setValueAtTime(12, audioCtx.currentTime);
 
-        // 4. UTILITY (Gain de sortie massif)
         const masterGain = audioCtx.createGain();
         masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
-        masterGain.gain.linearRampToValueAtTime(10, audioCtx.currentTime + 2); // Montée progressive pour éviter le POP
+        masterGain.gain.linearRampToValueAtTime(1.5, audioCtx.currentTime + 3); // Volume beaucoup plus bas et progressif
 
         // --- ROUTAGE ---
         noise.connect(noiseGain);
-        noiseGain.connect(delay);
-        delay.connect(feedback);
-        feedback.connect(delay); // Boucle Corpus
+        noiseGain.connect(delay1);
+        delay1.connect(delay2);
+        delay2.connect(feedback);
+        feedback.connect(delay1); // Boucle croisée
         
-        delay.connect(compressor);
+        delay2.connect(lpFilter);
+        lpFilter.connect(compressor);
         compressor.connect(masterGain);
         masterGain.connect(audioCtx.destination);
 

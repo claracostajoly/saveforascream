@@ -14,9 +14,7 @@
 <body>
 
     <div class="header">AFTER / WITHOUT - SIGNAL FLOW</div>
-
     <button id="btn">[ INITIALIZE SYSTEM ]</button>
-    
     <div id="status">STATUS: IDLE</div>
 
     <script>
@@ -27,13 +25,11 @@
         if (!audioCtx) {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
-
         if (!isRunning) {
             audioCtx.resume().then(() => {
                 runAfterWithout();
                 this.innerText = "[ TERMINATE SYSTEM ]";
-                document.getElementById('status').innerText = "STATUS: ACTIVE (+40dB GAIN)";
-                document.getElementById('status').style.color = "#444";
+                document.getElementById('status').innerText = "STATUS: ACTIVE (GRAIN & RESONANCE)";
                 isRunning = true;
             });
         } else {
@@ -42,39 +38,55 @@
     });
 
     function runAfterWithout() {
-        // 1. SOURCE : BRUIT BLANC (Erosion)
+        const now = audioCtx.currentTime;
+
+        // 1. SOURCE : BRUIT PLUS "GRAIN" (On réduit l'amplitude aléatoirement)
         const bufferSize = 2 * audioCtx.sampleRate;
         const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
         const output = noiseBuffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) {
-            output[i] = Math.random() * 0.005; 
+            // Un bruit moins linéaire, plus "digital grit"
+            output[i] = (Math.random() * 2 - 1) * (Math.random() > 0.9 ? 0.02 : 0.005); 
         }
         const source = audioCtx.createBufferSource();
         source.buffer = noiseBuffer;
         source.loop = true;
 
-        // 2. RÉSONATEUR : DELAY (Corpus)
+        // 2. FILTRE ANTI-INFRASON (High Pass)
+        // C'est ce qui va enlever la pression désagréable dans les basses
+        const hpFilter = audioCtx.createBiquadFilter();
+        hpFilter.type = "highpass";
+        hpFilter.frequency.value = 150; 
+
+        // 3. RÉSONATEUR INSTABLE (Pour éviter l'effet guitare)
         const delay = audioCtx.createDelay();
         delay.delayTime.value = 0.0022; 
 
-        const feedback = audioCtx.createGain();
-        feedback.gain.value = 0.95; 
+        // MODULATION DU DÉLAI (LFO aléatoire pour casser la note fixe)
+        const lfo = audioCtx.createOscillator();
+        const lfoGain = audioCtx.createGain();
+        lfo.type = 'sawtooth'; // Forme d'onde plus agressive pour le grain
+        lfo.frequency.value = 8; // Vitesse du grain
+        lfoGain.gain.value = 0.0002; 
+        lfo.connect(lfoGain);
+        lfoGain.connect(delay.delayTime);
+        lfo.start();
 
-        // 3. CHAINE DE GAIN ET COMPRESSION
+        const feedback = audioCtx.createGain();
+        feedback.gain.value = 0.93; 
+
+        // 4. CHAINE DE SORTIE
         const compressor = audioCtx.createDynamicsCompressor();
-        compressor.threshold.setValueAtTime(-50, audioCtx.currentTime);
-        compressor.knee.setValueAtTime(40, audioCtx.currentTime);
-        compressor.ratio.setValueAtTime(12, audioCtx.currentTime);
+        compressor.threshold.setValueAtTime(-40, now);
+        compressor.ratio.setValueAtTime(12, now);
 
         const gainNode = audioCtx.createGain();
-        
-        // --- CORRECTION DU POP : FADE-IN PROGRESSIF ---
-        const now = audioCtx.currentTime;
         gainNode.gain.setValueAtTime(0, now); 
-        gainNode.gain.linearRampToValueAtTime(35, now + 1.5); // Monte à 35 en 1.5 seconde
+        gainNode.gain.linearRampToValueAtTime(25, now + 2); // Montée douce
 
         // ROUTAGE
-        source.connect(delay);
+        source.connect(hpFilter);
+        hpFilter.connect(delay);
         delay.connect(feedback);
         feedback.connect(delay); 
         

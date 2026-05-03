@@ -1,95 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
-<meta charset="UTF-8">
-<title>y = y2</title>
-<style>
-body {
-  background:black;
-  color:white;
-  font-family:Arial, sans-serif;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:flex-start;
-  height:200vh;
-  margin:0;
-  padding-top:120px;
-}
-
-button {
-  margin-top:20px;
-  padding:10px 20px;
-  background:none;
-  border:1px solid white;
-  color:white;
-  cursor:pointer;
-}
-
-button:hover {
-  background:white;
-  color:black;
-}
-
-.meta {
-  margin-top:200px;
-  max-width:400px;
-  font-size:12px;
-  line-height:1.6;
-  text-align:left;
-}
-
-.hidden {
-  opacity:0;
-  transform:translateY(40px);
-  transition:all 1s ease;
-}
-
-.show {
-  opacity:1;
-  transform:translateY(0);
-}
-</style>
+    <meta charset="UTF-8">
+    <title>y = y2 | Machine à oublier</title>
+    <style>
+        body { background: #000; color: #1a1a1a; font-family: monospace; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .status { font-size: 10px; color: #222; letter-spacing: 5px; text-transform: uppercase; }
+        audio { filter: invert(1); opacity: 0.2; margin-top: 20px; }
+    </style>
 </head>
-
 <body>
-
-<div>y = y2</div>
-
-<button onclick="play()">listen</button>
-
-<div id="meta" class="meta hidden">
-each state replaces the previous one<br>
-the system runs continuously<br>
-it starts from noise<br>
-each iteration transforms the signal<br>
-each result becomes the next input<br>
-the system runs independently<br>
-only the current state is accessible
-Nothing happens when you click.
-You only access what is there now.
-</div>
-
-<audio id="player"></audio>
-
-<script>
-function play() {
-  const audio = document.getElementById("player");
-  audio.src = "./outputs/latest.wav?v=" + Date.now();
-  audio.load();
-  audio.play().catch(e => console.log(e));
-}
-
-window.addEventListener("scroll", () => {
-  const block = document.getElementById("meta");
-  const trigger = window.innerHeight * 0.8;
-  const rect = block.getBoundingClientRect();
-
-  if (rect.top < trigger) {
-    block.classList.add("show");
-  }
-});
-</script>
-
+    <div class="status">Substitution en cours : y = y2</div>
+    <!-- Remplace le chiffre par le numéro du dernier fichier généré par ton script -->
+    <audio controls loop>
+        <source src="outputs/state_0001.wav" type="audio/wav">
+    </audio>
 </body>
 </html>

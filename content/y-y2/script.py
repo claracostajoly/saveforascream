@@ -1,62 +1,46 @@
-import librosa
 import numpy as np
+import librosa
 import soundfile as sf
 import os
 import random
+from glob import glob
 
-OUTPUT_PATH = "content/y-y2/outputs/latest.wav"
+def machine_a_oublier():
+    # 1. Trouver le dernier état généré dans /outputs
+    states = sorted(glob("outputs/state_*.wav"))
+    
+    if not states:
+        # Si rien n'existe, on part du fichier initial
+        input_file = "input_init.wav"
+        current_idx = 0
+    else:
+        input_file = states[-1]
+        current_idx = int(input_file.split("_")[-1].split(".")[0])
 
-sr = 22050
-duration = 20
-target_len = sr * duration
+    # 2. Charger le signal (y)
+    y, sr = librosa.load(input_file, sr=None)
+    duration_samples = len(y)
+    
+    # 3. Transformer (y2)
+    # Légère dérive temporelle et spectrale
+    rate = random.uniform(0.99, 1.01)
+    y_transformed = librosa.effects.time_stretch(y, rate=rate)
+    y_transformed = librosa.effects.pitch_shift(y_transformed, sr=sr, n_steps=random.uniform(-0.2, 0.2))
+    
+    # Ajout du résidu de calcul (bruit d'érosion)
+    y_transformed += np.random.normal(0, 0.0005, len(y_transformed))
+    
+    # 4. Aligner (Correction du bug de durée)
+    if len(y_transformed) > duration_samples:
+        y_next = y_transformed[:duration_samples]
+    else:
+        y_next = np.pad(y_transformed, (0, duration_samples - len(y_transformed)))
 
-# --- INPUT ---
-if os.path.exists(OUTPUT_PATH):
-    y, sr = librosa.load(OUTPUT_PATH, sr=sr)
-else:
-    y = np.random.randn(target_len) * 0.1  # moins agressif au départ
+    # 5. Sauvegarder le nouvel état (Substituer)
+    new_idx = current_idx + 1
+    output_path = f"outputs/state_{new_idx:04d}.wav"
+    sf.write(output_path, y_next, sr)
+    print(f"Nouvel état généré : {output_path}")
 
-# --- TRANSFORMATIONS (plus lentes) ---
-pitch = random.uniform(-0.5, 0.5)
-stretch = random.uniform(0.95, 1.05)
-
-y2 = librosa.effects.pitch_shift(y, sr=sr, n_steps=pitch)
-y2 = librosa.effects.time_stretch(y2, rate=stretch)
-
-# --- DISTORSION DOUCE ---
-y2 = np.tanh(y2 * 1.2)
-
-# --- BRUIT (très réduit) ---
-y2 += np.random.normal(0, 0.0003, len(y2))
-
-# --- ALIGNEMENT DES LONGUEURS (CRUCIAL) ---
-if len(y2) < target_len:
-    y2 = np.pad(y2, (0, target_len - len(y2)))
-else:
-    y2 = y2[:target_len]
-
-if len(y) < target_len:
-    y = np.pad(y, (0, target_len - len(y)))
-else:
-    y = y[:target_len]
-
-# --- MÉLANGE (APRÈS ALIGNEMENT) ---
-y2 = 0.97 * y2 + 0.03 * y
-
-# --- NORMALISATION DOUCE ---
-peak = np.max(np.abs(y2)) + 1e-9
-y2 = y2 / peak * 0.85
-
-# --- SOFT LIMITER ---
-threshold = 0.75
-ratio = 0.3
-
-y2 = np.where(np.abs(y2) > threshold,
-              np.sign(y2) * (threshold + (np.abs(y2) - threshold) * ratio),
-              y2)
-
-# --- SMOOTHING (anti-clics) ---
-y2 = np.convolve(y2, np.ones(5)/5, mode='same')
-
-# --- EXPORT ---
-sf.write(OUTPUT_PATH, y2, sr)
+if __name__ == "__main__":
+    machine_a_oublier()

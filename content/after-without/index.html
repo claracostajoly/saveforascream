@@ -1,82 +1,47 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>After / Without - Safe Mass</title>
-    <style>
-        body { background: #000; color: #1a1a1a; font-family: monospace; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        button { background: none; border: 1px solid #111; color: #333; padding: 20px; cursor: pointer; font-family: monospace; transition: 0.8s; letter-spacing: 5px; }
-        button:hover { border-color: #444; color: #999; }
-        #status { font-size: 8px; margin-top: 40px; color: #111; letter-spacing: 10px; text-indent: 10px; }
-    </style>
-</head>
-<body>
-
-    <button id="btn">[ INITIALIZE RESIDUAL MASS ]</button>
-    <div id="status">VOID_STATE</div>
-
-    <script>
-    let audioCtx;
-    let isRunning = false;
-
-    document.getElementById('btn').onclick = function() {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (!isRunning) {
-            audioCtx.resume().then(() => {
-                startTheVoid();
-                this.innerText = "[ SUSTAINING ]";
-                document.getElementById('status').innerText = "SIGNAL_NORMALIZED_AT_0DB";
-                isRunning = true;
-            });
-        } else { location.reload(); }
-    };
-
-    function startTheVoid() {
+function startTheVoid() {
         const now = audioCtx.currentTime;
 
         // 1. SOURCE : EROSION NOISE
         const bufferSize = audioCtx.sampleRate * 4;
         const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
         const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
+        // On réduit l'amplitude du bruit initial pour avoir plus de contrôle
+        for (let i = 0; i < bufferSize; i++) { data[i] = (Math.random() * 2 - 1) * 0.5; }
         const source = audioCtx.createBufferSource();
         source.buffer = buffer; source.loop = true;
 
         const erosionFilter = audioCtx.createBiquadFilter();
         erosionFilter.type = "lowpass";
-        erosionFilter.frequency.value = 300; 
+        erosionFilter.frequency.value = 350; // Plus sombre pour moins de fatigue auditive
 
-        // 2. RÉSEAU DE RÉVERBÉRATION (Feedback)
-        const verbGains = [0.03, 0.05, 0.07, 0.11].map(t => {
+        // 2. RÉSEAU DE RÉVERBÉRATION
+        const verbGains = [0.031, 0.057, 0.083, 0.113].map(t => {
             const d = audioCtx.createDelay();
             d.delayTime.value = t;
             const f = audioCtx.createGain();
-            f.gain.value = 0.90; // Un peu réduit pour éviter l'effet "larsen" strident
+            f.gain.value = 0.85; // Baisse stratégique pour éviter l'emballement exponentiel
             return {d, f};
         });
 
-        // 3. COMPRESSEUR (Écrase la dynamique pour créer la masse)
+        // 3. COMPRESSEUR DE MASSE
         const compressor = audioCtx.createDynamicsCompressor();
-        compressor.threshold.setValueAtTime(-50, now);
-        compressor.knee.setValueAtTime(40, now);
+        compressor.threshold.setValueAtTime(-40, now);
         compressor.ratio.setValueAtTime(12, now);
-        compressor.attack.setValueAtTime(0, now);
-        compressor.release.setValueAtTime(0.25, now);
+        compressor.attack.setValueAtTime(0.01, now); // Un peu de "mou" pour éviter le clic sec
 
-        // 4. LIMITEUR DE SÉCURITÉ (Empêche le son de dépasser le seuil numérique)
-        const safetyLimiter = audioCtx.createDynamicsCompressor();
-        safetyLimiter.threshold.setValueAtTime(-1.0, now); // Seuil juste en dessous de 0dB
-        safetyLimiter.knee.setValueAtTime(0, now);
-        safetyLimiter.ratio.setValueAtTime(20, now);
+        // 4. PROTECTION FINALE (Le Garde-fou)
+        const limiter = audioCtx.createDynamicsCompressor();
+        limiter.threshold.setValueAtTime(-3.0, now); // On bloque tout à -3dB
+        limiter.ratio.setValueAtTime(20, now);
 
         const makeupGain = audioCtx.createGain();
         makeupGain.gain.setValueAtTime(0, now);
-        // On ramène le gain à 1.5 (au lieu de 31). C'est déjà très fort mais supportable.
-        makeupGain.gain.linearRampToValueAtTime(1.5, now + 4); 
+        // On remplace le 31.6 par 0.8. 
+        // L'effet de "mur de son" viendra de la compression, pas du volume pur.
+        makeupGain.gain.linearRampToValueAtTime(0.8, now + 6); 
 
         // --- ROUTAGE ---
         source.connect(erosionFilter);
-        
         verbGains.forEach(node => {
             erosionFilter.connect(node.d);
             node.d.connect(node.f);
@@ -85,11 +50,8 @@
         });
 
         compressor.connect(makeupGain);
-        makeupGain.connect(safetyLimiter);
-        safetyLimiter.connect(audioCtx.destination);
+        makeupGain.connect(limiter);
+        limiter.connect(audioCtx.destination);
 
         source.start();
     }
-    </script>
-</body>
-</html>

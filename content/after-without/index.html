@@ -4,100 +4,79 @@
     <meta charset="UTF-8">
     <title>After / Without - Live</title>
     <style>
-        body { background: #000; color: #333; font-family: monospace; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        button { background: none; border: 1px solid #222; color: #555; padding: 15px; cursor: pointer; font-family: monospace; transition: 0.3s; }
-        button:hover { border-color: #444; color: #888; }
-        #status { font-size: 10px; margin-top: 20px; letter-spacing: 2px; }
+        body { background: #000; color: #1a1a1a; font-family: monospace; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        button { background: none; border: 1px solid #111; color: #444; padding: 20px; cursor: pointer; font-family: monospace; transition: 0.5s; letter-spacing: 2px; }
+        button:hover { border-color: #ff6600; color: #ff6600; }
+        #status { font-size: 9px; margin-top: 25px; color: #111; text-transform: uppercase; letter-spacing: 3px; }
     </style>
 </head>
 <body>
 
-    <button id="btn">ACTIVER LA TENUE RÉSIDUELLE</button>
-    <div id="status">SYSTÈME : VEILLE</div>
+    <button id="btn">INITIALIZE RESIDUAL FLOW</button>
+    <div id="status">SYSTEM : STANDBY</div>
 
     <script>
     let audioCtx;
     let isRunning = false;
 
     document.getElementById('btn').onclick = function() {
-        if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (!isRunning) {
             audioCtx.resume().then(() => {
                 startSystem();
-                this.innerText = "COUPER LE SYSTÈME";
-                document.getElementById('status').innerText = "SYSTÈME : ACTIF (FLUX RÉSIDUEL)";
+                this.innerText = "TERMINATE FLOW";
+                document.getElementById('status').innerText = "SYSTEM : ACTIVE (NON-HARMONIC)";
                 isRunning = true;
             });
-        } else {
-            location.reload(); 
-        }
+        } else { location.reload(); }
     };
 
     function startSystem() {
         const now = audioCtx.currentTime;
 
-        // 1. SOURCE : Bruit Blanc (plus riche en fréquences "sales")
+        // 1. SOURCE : BRUIT TYPE "WIDE NOISE" (Erosion)
         const bufferSize = audioCtx.sampleRate * 2;
         const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
         const data = buffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
         const noise = audioCtx.createBufferSource();
-        noise.buffer = buffer;
-        noise.loop = true;
+        noise.buffer = buffer; noise.loop = true;
 
-        const noiseGain = audioCtx.createGain();
-        noiseGain.gain.value = 0.005;
+        // 2. FILTRE SOMBRE (Le son étouffé d'After / Without)
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.value = 900; // On coupe les sifflements de moustique
 
-        // 2. RÉSONATEURS DÉSACCORDÉS (Éviter l'effet guitare)
-        // On utilise des valeurs qui ne sont pas multiples l'une de l'autre
-        const delay1 = audioCtx.createDelay();
-        delay1.delayTime.value = 0.00731; // Plus long et "inharmonique"
-        
-        const delay2 = audioCtx.createDelay();
-        delay2.delayTime.value = 0.01137; // Valeur décalée pour créer de la texture, pas une note
-
-        // 3. MICRO-MODULATION (Le secret pour le rendu "Erosion/Souffle")
-        // On fait vibrer très légèrement le temps de délai pour "étaler" le son
-        const jitter = audioCtx.createOscillator();
-        const jitterGain = audioCtx.createGain();
-        jitter.type = 'sine';
-        jitter.frequency.value = 0.5; // Très lent
-        jitterGain.gain.value = 0.0005; // Très subtil
-        jitter.connect(jitterGain);
-        jitterGain.connect(delay1.delayTime);
-        jitterGain.connect(delay2.delayTime);
-        jitter.start();
+        // 3. RÉSONATEUR TYPE "PLATE" (Multi-Delay)
+        // On utilise 3 délais différents qui ne sont pas accordés entre eux
+        const delays = [0.031, 0.047, 0.061].map(t => {
+            const d = audioCtx.createDelay();
+            d.delayTime.value = t;
+            return d;
+        });
 
         const feedback = audioCtx.createGain();
-        feedback.gain.value = 0.88; // Un peu moins de feedback pour éviter le sifflement pur
+        feedback.gain.value = 0.82; // Feedback modéré pour éviter l'explosion
 
-        // 4. FILTRE DE TEXTURE (Couper les extrêmes)
-        const filter = audioCtx.createBiquadFilter();
-        filter.type = "bandpass"; // On isole une bande pour créer un souffle focalisé
-        filter.frequency.value = 2200;
-        filter.Q.value = 0.7;
-
-        // 5. MASTER & FADE-IN (Anti-Pop)
+        // 4. COMPRESSION MASSIVE (Mastering Ableton)
         const compressor = audioCtx.createDynamicsCompressor();
-        compressor.threshold.setValueAtTime(-24, now);
-        compressor.ratio.setValueAtTime(12, now);
+        compressor.threshold.setValueAtTime(-50, now);
+        compressor.ratio.setValueAtTime(20, now);
 
         const masterGain = audioCtx.createGain();
         masterGain.gain.setValueAtTime(0, now);
-        masterGain.gain.linearRampToValueAtTime(1.2, now + 2); // Montée en 2 secondes
+        masterGain.gain.linearRampToValueAtTime(3.0, now + 4); // Gain puissant mais progressif
 
-        // --- ROUTAGE ---
-        noise.connect(noiseGain);
-        noiseGain.connect(filter);
-        filter.connect(delay1);
-        delay1.connect(delay2);
-        delay2.connect(feedback);
-        feedback.connect(delay1); // Boucle de feedback
+        // --- ROUTAGE (Structure en étoile pour casser l'effet corde) ---
+        noise.connect(filter);
         
-        delay2.connect(compressor);
+        delays.forEach(d => {
+            filter.connect(d);
+            d.connect(feedback);
+            feedback.connect(d); // Chaque délai boucle sur lui-même
+            d.connect(compressor);
+        });
+
         compressor.connect(masterGain);
         masterGain.connect(audioCtx.destination);
 

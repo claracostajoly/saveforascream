@@ -2,63 +2,88 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>After / Without - Live</title>
+    <title>After / Without - Live System</title>
     <style>
         body { background: #000; color: #444; font-family: monospace; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        button { background: none; border: 1px solid #333; color: #777; padding: 15px; cursor: pointer; font-family: monospace; }
-        button:hover { border-color: #666; color: #aaa; }
+        button { background: none; border: 1px solid #333; color: #777; padding: 15px; cursor: pointer; font-family: monospace; transition: 0.2s; }
+        button:hover { border-color: #999; color: #fff; }
+        #status { font-size: 10px; margin-top: 20px; letter-spacing: 2px; }
     </style>
 </head>
 <body>
 
     <button id="btn">ACTIVER LA TENUE RÉSIDUELLE</button>
-    <p id="status" style="font-size: 10px; margin-top: 20px;">ÉTAT : VEILLE</p>
+    <div id="status">SYSTÈME : VEILLE</div>
 
     <script>
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    let audioCtx;
     let isRunning = false;
 
     document.getElementById('btn').onclick = function() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
         if (!isRunning) {
-            ctx.resume();
-            startAfterWithout();
-            this.innerText = "COUPER LE SYSTÈME";
-            document.getElementById('status').innerText = "ÉTAT : FONCTIONNEMENT RÉSIDUEL";
-            isRunning = true;
+            audioCtx.resume().then(() => {
+                startAfterWithout();
+                this.innerText = "COUPER LE SYSTÈME";
+                document.getElementById('status').innerText = "SYSTÈME : FONCTIONNEMENT RÉSIDUEL ACTIF";
+                isRunning = true;
+            });
         } else {
             location.reload(); 
         }
     };
 
     function startAfterWithout() {
-        const whiteNoise = ctx.createBufferSource();
-        const bufferSize = 2 * ctx.sampleRate;
-        const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-        const data = noiseBuffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 0.005; }
-        whiteNoise.buffer = noiseBuffer;
-        whiteNoise.loop = true;
+        // 1. Source de bruit constante (mimant l'Erosion d'Ableton)
+        const bufferSize = audioCtx.sampleRate * 2;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
 
-        const delay = ctx.createDelay();
-        delay.delayTime.value = 0.0022; 
-        const feedback = ctx.createGain();
-        feedback.gain.value = 0.94; 
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        noise.loop = true;
 
-        const compressor = ctx.createDynamicsCompressor();
-        compressor.threshold.setValueAtTime(-50, ctx.currentTime);
-        compressor.ratio.setValueAtTime(12, ctx.currentTime);
-        
-        const makeUpGain = ctx.createGain();
-        makeUpGain.gain.value = 40; 
+        // 2. Filtre de réduction (Erosion Pre-filter)
+        const preFilter = audioCtx.createBiquadFilter();
+        preFilter.type = "bandpass";
+        preFilter.frequency.value = 1200;
+        preFilter.Q.value = 1;
 
-        whiteNoise.connect(delay);
+        // 3. Résonateur (Le module "Corpus")
+        const delay = audioCtx.createDelay();
+        delay.delayTime.value = 0.0025; // Fréquence métallique
+        const feedback = audioCtx.createGain();
+        feedback.gain.value = 0.92; // Tenue stable
+
+        // 4. Gain massif (+30dB comme sur ta Capture d’écran 2026-05-03 à 22.28.32.jpg)
+        const amp = audioCtx.createGain();
+        amp.gain.value = 35; 
+
+        // 5. Limiteur de sécurité (Master)
+        const limiter = audioCtx.createDynamicsCompressor();
+        limiter.threshold.setValueAtTime(-3, audioCtx.currentTime);
+        limiter.knee.setValueAtTime(0, audioCtx.currentTime);
+        limiter.ratio.setValueAtTime(20, audioCtx.currentTime);
+        limiter.attack.setValueAtTime(0.005, audioCtx.currentTime);
+        limiter.release.setValueAtTime(0.05, audioCtx.currentTime);
+
+        // --- ROUTAGE ---
+        noise.connect(preFilter);
+        preFilter.connect(delay);
         delay.connect(feedback);
-        feedback.connect(delay); 
-        delay.connect(compressor);
-        compressor.connect(makeUpGain);
-        makeUpGain.connect(ctx.destination);
+        feedback.connect(delay); // Boucle de résonance
+        
+        delay.connect(amp);
+        amp.connect(limiter);
+        limiter.connect(audioCtx.destination);
 
-        whiteNoise.start();
+        noise.start();
     }
     </script>
 </body>

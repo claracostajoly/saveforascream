@@ -2,18 +2,18 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>After / Without - Live</title>
+    <title>After / Without - Infinite</title>
     <style>
         body { background: #000; color: #333; font-family: monospace; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; text-transform: uppercase; }
-        button { background: none; border: 1px solid #222; color: #444; padding: 20px; cursor: pointer; font-family: monospace; transition: 0.4s; letter-spacing: 2px; }
+        button { background: none; border: 1px solid #222; color: #666; padding: 25px; cursor: pointer; font-family: monospace; transition: 0.4s; letter-spacing: 3px; }
         button:hover { border-color: #ff6600; color: #ff6600; }
-        #status { font-size: 9px; margin-top: 20px; color: #111; letter-spacing: 3px; }
+        #status { font-size: 10px; margin-top: 30px; color: #222; letter-spacing: 4px; }
     </style>
 </head>
 <body>
 
-    <button id="btn">[ INITIALIZE SYSTEM ]</button>
-    <div id="status">STATUS: STANDBY</div>
+    <button id="btn">[ INITIALIZE INFINITE FLOW ]</button>
+    <div id="status">SIGNAL: OFF</div>
 
     <script>
     let audioCtx;
@@ -23,70 +23,73 @@
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (!isRunning) {
             audioCtx.resume().then(() => {
-                startAfterWithout();
-                this.innerText = "[ TERMINATE ]";
-                document.getElementById('status').innerText = "STATUS: ACTIVE (BEAM RESONANCE)";
+                startInfiniteSystem();
+                this.innerText = "[ TERMINATE FLOW ]";
+                document.getElementById('status').innerText = "SIGNAL: SUSTAIN_ACTIVE (+30dB)";
                 isRunning = true;
             });
         } else { location.reload(); }
     };
 
-    function startAfterWithout() {
+    function startInfiniteSystem() {
         const now = audioCtx.currentTime;
 
-        // 1. EROSION (Noise à 300Hz comme sur ta capture)
+        // 1. SOURCE : BRUIT ROSE (Plus dense que le blanc pour une nappe massive)
         const bufferSize = audioCtx.sampleRate * 2;
         const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
         const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
+        let lastOut = 0;
+        for (let i = 0; i < bufferSize; i++) {
+            // Algorithme de bruit rose pour plus de corps dans les bas-médiums
+            let white = Math.random() * 2 - 1;
+            data[i] = (lastOut + (0.02 * white)) / 1.02;
+            lastOut = data[i];
+            data[i] *= 3.5; 
+        }
         const noise = audioCtx.createBufferSource();
-        noise.buffer = buffer; noise.loop = true;
+        noise.buffer = buffer;
+        noise.loop = true;
 
-        const noiseFilter = audioCtx.createBiquadFilter();
-        noiseFilter.type = "lowpass";
-        noiseFilter.frequency.value = 300; // Fréquence Erosion capture 1
+        // 2. FILTRE EROSION (Capture d’écran 2026-05-03 à 23.43.17.jpg : 300Hz)
+        const erosionFilter = audioCtx.createBiquadFilter();
+        erosionFilter.type = "lowpass";
+        erosionFilter.frequency.value = 350;
+        erosionFilter.Q.value = 1.5;
 
-        // 2. CORPUS (Mode Beam - Résonance longue)
-        // Le mode Beam est simulé par un feedback très élevé et un filtre interne
+        // 3. LE NOEUD DE RÉSONANCE (CORPUS BEAM INFINI)
+        // On crée une boucle de feedback qui frôle l'auto-oscillation
         const beamDelay = audioCtx.createDelay();
-        beamDelay.delayTime.value = 0.0038; // Environ 261Hz (Note C3 sur ta capture)
+        beamDelay.delayTime.value = 1 / 261.63; // Fréquence C3 comme sur ta capture
 
-        const beamFeedback = audioCtx.createGain();
-        beamFeedback.gain.value = 0.985; // Decay long (1.32s)
+        const feedback = audioCtx.createGain();
+        feedback.gain.value = 0.995; // SUSTAIN quasi-infini (Decay 1.32s+)
 
-        // 3. REVERB (Diffusion Network sur ta capture 2)
-        const reverb = audioCtx.createConvolver(); 
-        // Simulation simple de reverb via un delay secondaire pour ne pas alourdir
-        const verbDelay = audioCtx.createDelay();
-        verbDelay.delayTime.value = 0.09; 
-        const verbFeedback = audioCtx.createGain();
-        verbFeedback.gain.value = 0.4;
-
-        // 4. COMPRESSOR (+30dB de Makeup Gain !)
+        // 4. COMPRESSION DE SORTIE (Makeup Gain +30dB)
+        // C'est ici qu'on crée la "masse"
         const compressor = audioCtx.createDynamicsCompressor();
         compressor.threshold.setValueAtTime(-50, now);
-        compressor.ratio.setValueAtTime(10, now);
+        compressor.knee.setValueAtTime(40, now);
+        compressor.ratio.setValueAtTime(20, now);
+        compressor.attack.setValueAtTime(0, now);
+        compressor.release.setValueAtTime(0.2, now);
 
-        const makeUpGain = audioCtx.createGain();
-        makeUpGain.gain.setValueAtTime(0, now);
-        // On monte très haut pour simuler le "Out 30.0 dB" de ta capture
-        makeUpGain.gain.linearRampToValueAtTime(30, now + 3); 
+        const volumeBoost = audioCtx.createGain();
+        volumeBoost.gain.setValueAtTime(0, now);
+        // On simule le "Out 30.0 dB" de ta Capture d’écran 2026-05-03 à 23.43.35.jpg
+        volumeBoost.gain.linearRampToValueAtTime(15, now + 3); 
 
-        // ROUTAGE
-        noise.connect(noiseFilter);
-        noiseFilter.connect(beamDelay);
-        beamDelay.connect(beamFeedback);
-        beamFeedback.connect(beamDelay); // Boucle Corpus
+        // --- ROUTAGE CIRCULAIRE ---
+        noise.connect(erosionFilter);
+        erosionFilter.connect(beamDelay);
         
-        beamDelay.connect(verbDelay);
-        verbDelay.connect(verbFeedback);
-        verbFeedback.connect(verbDelay); // Boucle Reverb
+        // La boucle Beam
+        beamDelay.connect(feedback);
+        feedback.connect(beamDelay);
         
-        verbDelay.connect(compressor);
-        beamDelay.connect(compressor); // Mix Dry/Wet
-        
-        compressor.connect(makeUpGain);
-        makeUpGain.connect(audioCtx.destination);
+        // Sortie vers le compresseur
+        beamDelay.connect(compressor);
+        compressor.connect(volumeBoost);
+        volumeBoost.connect(audioCtx.destination);
 
         noise.start();
     }

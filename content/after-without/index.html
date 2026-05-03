@@ -2,18 +2,18 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>After / Without - Infinite</title>
+    <title>After / Without - Final Flow</title>
     <style>
-        body { background: #000; color: #333; font-family: monospace; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; text-transform: uppercase; }
-        button { background: none; border: 1px solid #222; color: #666; padding: 25px; cursor: pointer; font-family: monospace; transition: 0.4s; letter-spacing: 3px; }
-        button:hover { border-color: #ff6600; color: #ff6600; }
-        #status { font-size: 10px; margin-top: 30px; color: #222; letter-spacing: 4px; }
+        body { background: #000; color: #1a1a1a; font-family: monospace; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        button { background: none; border: 1px solid #111; color: #333; padding: 20px; cursor: pointer; font-family: monospace; transition: 0.8s; letter-spacing: 5px; }
+        button:hover { border-color: #444; color: #999; }
+        #status { font-size: 8px; margin-top: 40px; color: #111; letter-spacing: 10px; text-indent: 10px; }
     </style>
 </head>
 <body>
 
-    <button id="btn">[ INITIALIZE INFINITE FLOW ]</button>
-    <div id="status">SIGNAL: OFF</div>
+    <button id="btn">[ INITIALIZE RESIDUAL MASS ]</button>
+    <div id="status">VOID_STATE</div>
 
     <script>
     let audioCtx;
@@ -23,75 +23,65 @@
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (!isRunning) {
             audioCtx.resume().then(() => {
-                startInfiniteSystem();
-                this.innerText = "[ TERMINATE FLOW ]";
-                document.getElementById('status').innerText = "SIGNAL: SUSTAIN_ACTIVE (+30dB)";
+                startTheVoid();
+                this.innerText = "[ SUSTAINING ]";
+                document.getElementById('status').innerText = "SIGNAL_ACTIVE_AT_+30DB";
                 isRunning = true;
             });
         } else { location.reload(); }
     };
 
-    function startInfiniteSystem() {
+    function startTheVoid() {
         const now = audioCtx.currentTime;
 
-        // 1. SOURCE : BRUIT ROSE (Plus dense que le blanc pour une nappe massive)
-        const bufferSize = audioCtx.sampleRate * 2;
+        // 1. SOURCE : EROSION NOISE (Capture d’écran 2026-05-03 à 23.43.17.jpg)
+        // On génère un bruit très dense
+        const bufferSize = audioCtx.sampleRate * 4;
         const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
         const data = buffer.getChannelData(0);
-        let lastOut = 0;
-        for (let i = 0; i < bufferSize; i++) {
-            // Algorithme de bruit rose pour plus de corps dans les bas-médiums
-            let white = Math.random() * 2 - 1;
-            data[i] = (lastOut + (0.02 * white)) / 1.02;
-            lastOut = data[i];
-            data[i] *= 3.5; 
-        }
-        const noise = audioCtx.createBufferSource();
-        noise.buffer = buffer;
-        noise.loop = true;
+        for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
+        const source = audioCtx.createBufferSource();
+        source.buffer = buffer; source.loop = true;
 
-        // 2. FILTRE EROSION (Capture d’écran 2026-05-03 à 23.43.17.jpg : 300Hz)
         const erosionFilter = audioCtx.createBiquadFilter();
         erosionFilter.type = "lowpass";
-        erosionFilter.frequency.value = 350;
-        erosionFilter.Q.value = 1.5;
+        erosionFilter.frequency.value = 300; // Calqué sur ton réglage Erosion
 
-        // 3. LE NOEUD DE RÉSONANCE (CORPUS BEAM INFINI)
-        // On crée une boucle de feedback qui frôle l'auto-oscillation
-        const beamDelay = audioCtx.createDelay();
-        beamDelay.delayTime.value = 1 / 261.63; // Fréquence C3 comme sur ta capture
+        // 2. LA REVERB INFINIE (Capture d’écran 2026-05-03 à 23.43.35.jpg : 20.6s Decay)
+        // On simule ce réseau de diffusion avec plusieurs lignes de délais croisées
+        const verbGains = [0.03, 0.05, 0.07, 0.11].map(t => {
+            const d = audioCtx.createDelay();
+            d.delayTime.value = t;
+            const f = audioCtx.createGain();
+            f.gain.value = 0.92; // Très haut pour le sustain de 20s
+            return {d, f};
+        });
 
-        const feedback = audioCtx.createGain();
-        feedback.gain.value = 0.995; // SUSTAIN quasi-infini (Decay 1.32s+)
-
-        // 4. COMPRESSION DE SORTIE (Makeup Gain +30dB)
-        // C'est ici qu'on crée la "masse"
+        // 3. LE COMPRESSEUR +30dB (Capture d’écran 2026-05-03 à 23.43.35.jpg)
         const compressor = audioCtx.createDynamicsCompressor();
         compressor.threshold.setValueAtTime(-50, now);
-        compressor.knee.setValueAtTime(40, now);
-        compressor.ratio.setValueAtTime(20, now);
-        compressor.attack.setValueAtTime(0, now);
-        compressor.release.setValueAtTime(0.2, now);
+        compressor.ratio.setValueAtTime(10, now);
 
-        const volumeBoost = audioCtx.createGain();
-        volumeBoost.gain.setValueAtTime(0, now);
-        // On simule le "Out 30.0 dB" de ta Capture d’écran 2026-05-03 à 23.43.35.jpg
-        volumeBoost.gain.linearRampToValueAtTime(15, now + 3); 
+        const makeupGain = audioCtx.createGain();
+        makeupGain.gain.setValueAtTime(0, now);
+        // On explose le gain de sortie pour créer la "nappe massive"
+        makeupGain.gain.linearRampToValueAtTime(31.6, now + 5); 
 
-        // --- ROUTAGE CIRCULAIRE ---
-        noise.connect(erosionFilter);
-        erosionFilter.connect(beamDelay);
+        // --- ROUTAGE ---
+        source.connect(erosionFilter);
         
-        // La boucle Beam
-        beamDelay.connect(feedback);
-        feedback.connect(beamDelay);
-        
-        // Sortie vers le compresseur
-        beamDelay.connect(compressor);
-        compressor.connect(volumeBoost);
-        volumeBoost.connect(audioCtx.destination);
+        // Création du réseau de réverbération (Feedback Matrix)
+        verbGains.forEach(node => {
+            erosionFilter.connect(node.d);
+            node.d.connect(node.f);
+            node.f.connect(node.d); // Feedback interne
+            node.d.connect(compressor);
+        });
 
-        noise.start();
+        compressor.connect(makeupGain);
+        makeupGain.connect(audioCtx.destination);
+
+        source.start();
     }
     </script>
 </body>

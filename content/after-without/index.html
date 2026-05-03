@@ -2,18 +2,18 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>After / Without - Live System</title>
+    <title>After / Without - Live</title>
     <style>
         body { background: #000; color: #444; font-family: monospace; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        button { background: none; border: 1px solid #333; color: #777; padding: 15px; cursor: pointer; font-family: monospace; transition: 0.2s; }
-        button:hover { border-color: #999; color: #fff; }
-        #status { font-size: 10px; margin-top: 20px; letter-spacing: 2px; }
+        button { background: none; border: 1px solid #333; color: #777; padding: 15px; cursor: pointer; font-family: monospace; }
+        button:hover { border-color: #fff; color: #fff; }
+        #status { font-size: 10px; margin-top: 20px; color: #222; }
     </style>
 </head>
 <body>
 
-    <button id="btn">ACTIVER LA TENUE RÉSIDUELLE</button>
-    <div id="status">SYSTÈME : VEILLE</div>
+    <button id="btn">ACTIVER LE DISPOSITIF</button>
+    <div id="status">SYSTÈME EN ATTENTE</div>
 
     <script>
     let audioCtx;
@@ -26,9 +26,10 @@
 
         if (!isRunning) {
             audioCtx.resume().then(() => {
-                startAfterWithout();
+                startSystem();
                 this.innerText = "COUPER LE SYSTÈME";
-                document.getElementById('status').innerText = "SYSTÈME : FONCTIONNEMENT RÉSIDUEL ACTIF";
+                document.getElementById('status').innerText = "TENUE RÉSIDUELLE ACTIVE";
+                document.getElementById('status').style.color = "#444";
                 isRunning = true;
             });
         } else {
@@ -36,52 +37,41 @@
         }
     };
 
-    function startAfterWithout() {
-        // 1. Source de bruit constante (mimant l'Erosion d'Ableton)
-        const bufferSize = audioCtx.sampleRate * 2;
-        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-            data[i] = Math.random() * 2 - 1;
-        }
+    function startSystem() {
+        // 1. Source (Bruit très faible pour simuler l'Erosion)
+        const noise = audioCtx.createOscillator();
+        noise.type = 'sawtooth'; // Plus riche en harmoniques pour le Corpus
+        noise.frequency.value = 50; 
+        
+        const noiseGain = audioCtx.createGain();
+        noiseGain.gain.value = 0.001; // Presque inaudible au départ
 
-        const noise = audioCtx.createBufferSource();
-        noise.buffer = buffer;
-        noise.loop = true;
-
-        // 2. Filtre de réduction (Erosion Pre-filter)
-        const preFilter = audioCtx.createBiquadFilter();
-        preFilter.type = "bandpass";
-        preFilter.frequency.value = 1200;
-        preFilter.Q.value = 1;
-
-        // 3. Résonateur (Le module "Corpus")
+        // 2. RÉSONATEUR (Le Corpus de Capture d’écran 2026-05-03 à 22.28.43.jpg)
         const delay = audioCtx.createDelay();
-        delay.delayTime.value = 0.0025; // Fréquence métallique
+        delay.delayTime.value = 0.005; // Résonance basse/mid
         const feedback = audioCtx.createGain();
-        feedback.gain.value = 0.92; // Tenue stable
+        feedback.gain.value = 0.9; // Stable
 
-        // 4. Gain massif (+30dB comme sur ta Capture d’écran 2026-05-03 à 22.28.32.jpg)
-        const amp = audioCtx.createGain();
-        amp.gain.value = 35; 
+        // 3. GATE + COMPRESSION (Capture d’écran 2026-05-03 à 22.28.32.jpg)
+        const compressor = audioCtx.createDynamicsCompressor();
+        compressor.threshold.setValueAtTime(-40, audioCtx.currentTime);
+        compressor.knee.setValueAtTime(40, audioCtx.currentTime);
+        compressor.ratio.setValueAtTime(12, audioCtx.currentTime);
 
-        // 5. Limiteur de sécurité (Master)
-        const limiter = audioCtx.createDynamicsCompressor();
-        limiter.threshold.setValueAtTime(-3, audioCtx.currentTime);
-        limiter.knee.setValueAtTime(0, audioCtx.currentTime);
-        limiter.ratio.setValueAtTime(20, audioCtx.currentTime);
-        limiter.attack.setValueAtTime(0.005, audioCtx.currentTime);
-        limiter.release.setValueAtTime(0.05, audioCtx.currentTime);
+        // 4. UTILITY (Gain de sortie massif)
+        const masterGain = audioCtx.createGain();
+        masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        masterGain.gain.linearRampToValueAtTime(10, audioCtx.currentTime + 2); // Montée progressive pour éviter le POP
 
         // --- ROUTAGE ---
-        noise.connect(preFilter);
-        preFilter.connect(delay);
+        noise.connect(noiseGain);
+        noiseGain.connect(delay);
         delay.connect(feedback);
-        feedback.connect(delay); // Boucle de résonance
+        feedback.connect(delay); // Boucle Corpus
         
-        delay.connect(amp);
-        amp.connect(limiter);
-        limiter.connect(audioCtx.destination);
+        delay.connect(compressor);
+        compressor.connect(masterGain);
+        masterGain.connect(audioCtx.destination);
 
         noise.start();
     }

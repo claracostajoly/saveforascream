@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>After / Without - Final Flow</title>
+    <title>After / Without - Safe Mass</title>
     <style>
         body { background: #000; color: #1a1a1a; font-family: monospace; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; }
         button { background: none; border: 1px solid #111; color: #333; padding: 20px; cursor: pointer; font-family: monospace; transition: 0.8s; letter-spacing: 5px; }
@@ -25,7 +25,7 @@
             audioCtx.resume().then(() => {
                 startTheVoid();
                 this.innerText = "[ SUSTAINING ]";
-                document.getElementById('status').innerText = "SIGNAL_ACTIVE_AT_+30DB";
+                document.getElementById('status').innerText = "SIGNAL_NORMALIZED_AT_0DB";
                 isRunning = true;
             });
         } else { location.reload(); }
@@ -34,8 +34,7 @@
     function startTheVoid() {
         const now = audioCtx.currentTime;
 
-        // 1. SOURCE : EROSION NOISE (Capture d’écran 2026-05-03 à 23.43.17.jpg)
-        // On génère un bruit très dense
+        // 1. SOURCE : EROSION NOISE
         const bufferSize = audioCtx.sampleRate * 4;
         const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
         const data = buffer.getChannelData(0);
@@ -45,41 +44,49 @@
 
         const erosionFilter = audioCtx.createBiquadFilter();
         erosionFilter.type = "lowpass";
-        erosionFilter.frequency.value = 300; // Calqué sur ton réglage Erosion
+        erosionFilter.frequency.value = 300; 
 
-        // 2. LA REVERB INFINIE (Capture d’écran 2026-05-03 à 23.43.35.jpg : 20.6s Decay)
-        // On simule ce réseau de diffusion avec plusieurs lignes de délais croisées
+        // 2. RÉSEAU DE RÉVERBÉRATION (Feedback)
         const verbGains = [0.03, 0.05, 0.07, 0.11].map(t => {
             const d = audioCtx.createDelay();
             d.delayTime.value = t;
             const f = audioCtx.createGain();
-            f.gain.value = 0.92; // Très haut pour le sustain de 20s
+            f.gain.value = 0.90; // Un peu réduit pour éviter l'effet "larsen" strident
             return {d, f};
         });
 
-        // 3. LE COMPRESSEUR +30dB (Capture d’écran 2026-05-03 à 23.43.35.jpg)
+        // 3. COMPRESSEUR (Écrase la dynamique pour créer la masse)
         const compressor = audioCtx.createDynamicsCompressor();
         compressor.threshold.setValueAtTime(-50, now);
-        compressor.ratio.setValueAtTime(10, now);
+        compressor.knee.setValueAtTime(40, now);
+        compressor.ratio.setValueAtTime(12, now);
+        compressor.attack.setValueAtTime(0, now);
+        compressor.release.setValueAtTime(0.25, now);
+
+        // 4. LIMITEUR DE SÉCURITÉ (Empêche le son de dépasser le seuil numérique)
+        const safetyLimiter = audioCtx.createDynamicsCompressor();
+        safetyLimiter.threshold.setValueAtTime(-1.0, now); // Seuil juste en dessous de 0dB
+        safetyLimiter.knee.setValueAtTime(0, now);
+        safetyLimiter.ratio.setValueAtTime(20, now);
 
         const makeupGain = audioCtx.createGain();
         makeupGain.gain.setValueAtTime(0, now);
-        // On explose le gain de sortie pour créer la "nappe massive"
-        makeupGain.gain.linearRampToValueAtTime(31.6, now + 5); 
+        // On ramène le gain à 1.5 (au lieu de 31). C'est déjà très fort mais supportable.
+        makeupGain.gain.linearRampToValueAtTime(1.5, now + 4); 
 
         // --- ROUTAGE ---
         source.connect(erosionFilter);
         
-        // Création du réseau de réverbération (Feedback Matrix)
         verbGains.forEach(node => {
             erosionFilter.connect(node.d);
             node.d.connect(node.f);
-            node.f.connect(node.d); // Feedback interne
+            node.f.connect(node.d); 
             node.d.connect(compressor);
         });
 
         compressor.connect(makeupGain);
-        makeupGain.connect(audioCtx.destination);
+        makeupGain.connect(safetyLimiter);
+        safetyLimiter.connect(audioCtx.destination);
 
         source.start();
     }

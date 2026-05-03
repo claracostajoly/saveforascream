@@ -2,11 +2,11 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>after / without</title>
+    <title>After / Without</title>
     <style>
         body { background: #000; color: #444; font-family: monospace; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; text-transform: uppercase; }
         .header { font-size: 11px; letter-spacing: 2px; margin-bottom: 20px; color: #666; }
-        button { background: none; border: 1px solid #333; color: #555; padding: 15px 30px; cursor: pointer; font-family: monospace; transition: 0.2s; }
+        button { background: none; border: 1px solid #333; color: #555; padding: 15px 30px; cursor: pointer; font-family: monospace; transition: 0.2s; z-index: 10; }
         button:hover { border-color: #ff6600; color: #ff6600; }
         #status { font-size: 9px; margin-top: 20px; color: #222; }
     </style>
@@ -15,69 +15,73 @@
 
     <div class="header">AFTER / WITHOUT - SIGNAL FLOW</div>
 
-    <button id="btn">[ ACTIVER LE SYSTÈME ]</button>
+    <button id="btn">[ INITIALIZE SYSTEM ]</button>
     
-    <div id="status">ÉTAT : VEILLE RÉSIDUELLE</div>
+    <div id="status">STATUS: IDLE</div>
 
     <script>
-    let ctx;
+    // On déclare les variables globalement pour éviter les erreurs de portée
+    let audioCtx;
     let isRunning = false;
 
-    document.getElementById('btn').onclick = function() {
-        if (!ctx) {
-            ctx = new (window.AudioContext || window.webkitAudioContext)();
+    document.getElementById('btn').addEventListener('click', function() {
+        // Initialisation de l'AudioContext au premier clic (obligatoire sur Chrome/Safari)
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
 
         if (!isRunning) {
-            ctx.resume().then(() => {
-                startAfterWithout();
-                this.innerText = "[ COUPER LE SYSTÈME ]";
-                document.getElementById('status').innerText = "ÉTAT : FONCTIONNEMENT (GAIN +40dB)";
+            audioCtx.resume().then(() => {
+                runAfterWithout();
+                this.innerText = "[ TERMINATE SYSTEM ]";
+                document.getElementById('status').innerText = "STATUS: ACTIVE (+40dB GAIN)";
+                document.getElementById('status').style.color = "#444";
                 isRunning = true;
             });
         } else {
+            // Un deuxième clic recharge la page pour tout couper proprement
             location.reload(); 
         }
-    };
+    });
 
-    function startAfterWithout() {
-        // --- 1. SOURCE : BRUIT DE FOND TRÈS FIN (L'EROSION) ---
-        const bufferSize = 2 * ctx.sampleRate;
-        const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-        const data = noiseBuffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) { 
-            data[i] = Math.random() * 0.005; // Niveau très bas pour être "révélé" par le gain
+    function runAfterWithout() {
+        // 1. SOURCE : BRUIT BLANC (Erosion)
+        const bufferSize = 2 * audioCtx.sampleRate;
+        const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            output[i] = Math.random() * 0.005; 
         }
-        const whiteNoise = ctx.createBufferSource();
-        whiteNoise.buffer = noiseBuffer;
-        whiteNoise.loop = true;
+        const source = audioCtx.createBufferSource();
+        source.buffer = noiseBuffer;
+        source.loop = true;
 
-        // --- 2. RÉSONATEUR : DELAY (LE CORPUS) ---
-        const delay = ctx.createDelay();
-        delay.delayTime.value = 0.0022; // Fréquence de la résonance métallique
+        // 2. RÉSONATEUR : DELAY (Corpus)
+        const delay = audioCtx.createDelay();
+        delay.delayTime.value = 0.0022; 
 
-        const feedback = ctx.createGain();
-        feedback.gain.value = 0.95; // Intensité de la résonance
+        const feedback = audioCtx.createGain();
+        feedback.gain.value = 0.95; 
 
-        // --- 3. COMPRESSION + GAIN (+40dB COMME SUR LA CAPTURE) ---
-        const compressor = ctx.createDynamicsCompressor();
-        compressor.threshold.setValueAtTime(-50, ctx.currentTime);
-        compressor.ratio.setValueAtTime(12, ctx.currentTime);
-        
-        const makeUpGain = ctx.createGain();
-        makeUpGain.gain.value = 40; // Gain massif pour faire remonter le bruit
+        // 3. CHAINE DE GAIN MASSIF ET COMPRESSION
+        const compressor = audioCtx.createDynamicsCompressor();
+        compressor.threshold.setValueAtTime(-50, audioCtx.currentTime);
+        compressor.knee.setValueAtTime(40, audioCtx.currentTime);
+        compressor.ratio.setValueAtTime(12, audioCtx.currentTime);
 
-        // --- ROUTAGE EN BOUCLE POUR LE CORPUS (FIGURÉ SUR TA CAPTURE) ---
-        whiteNoise.connect(delay);
+        const gainNode = audioCtx.createGain();
+        gainNode.gain.value = 35; // Gain de sortie puissant
+
+        // ROUTAGE
+        source.connect(delay);
         delay.connect(feedback);
-        feedback.connect(delay); // Boucle de feedback
+        feedback.connect(delay); // Boucle de feedback infinie
         
-        // --- SORTIE VERS LA CHAÎNE FINALE ---
         delay.connect(compressor);
-        compressor.connect(makeUpGain);
-        makeUpGain.connect(ctx.destination);
+        compressor.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
 
-        whiteNoise.start();
+        source.start();
     }
     </script>
 </body>

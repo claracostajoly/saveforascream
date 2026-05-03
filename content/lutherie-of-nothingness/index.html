@@ -1,1 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LUTHERIE OF NOTHINGNESS</title>
+    <style>
+        body { background: #000; color: #444; font-family: 'Courier New', monospace; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; text-transform: uppercase; }
+        .header { font-size: 12px; letter-spacing: 4px; color: #888; margin-bottom: 40px; text-align: center; }
+        .manifesto { max-width: 500px; font-size: 10px; line-height: 1.8; color: #333; margin-bottom: 40px; text-align: justify; border-left: 1px solid #222; padding-left: 20px; }
+        canvas { border-top: 1px solid #111; border-bottom: 1px solid #111; width: 100%; height: 60px; margin-bottom: 40px; }
+        button { background: none; border: 1px solid #333; color: #555; padding: 20px 40px; cursor: pointer; font-family: monospace; font-size: 10px; letter-spacing: 3px; transition: 0.3s; }
+        button:hover { border-color: #666; color: #999; }
+        .status-line { font-size: 9px; margin-top: 10px; color: #222; }
+    </style>
+</head>
+<body>
 
+    <div class="header">LUTHERIE OF NOTHINGNESS</div>
+
+    <div class="manifesto">
+        STATUS: [ IDLE / RESIDUAL ]<br>
+        SOURCE: COMPUTATIONAL NOISE (32-BIT FLOAT)<br>
+        BODY: DUAL VIRTUAL RESONATORS<br><br>
+        The electric guitar sound you perceive is an emergent property of the feedback loop. 
+        There is no instrument. There is no input. Only the vibration of the system’s own limits.
+    </div>
+
+    <canvas id="scope"></canvas>
+
+    <button id="btn">[ INITIALIZE ]</button>
+    <div id="status-text" class="status-line">SYSTEM_AWAITING_INPUT</div>
+
+    <script>
+    let audioCtx, analyser, dataArray, canvas, canvasCtx;
+    let isRunning = false;
+
+    document.getElementById('btn').onclick = function() {
+        if (!audioCtx) setupAudio();
+        if (!isRunning) {
+            audioCtx.resume();
+            startSystem();
+            this.innerText = "[ TERMINATE ]";
+            document.getElementById('status-text').innerText = "SYSTEM_RUNNING_RESIDUAL_FLOW";
+            isRunning = true;
+            draw();
+        } else { location.reload(); }
+    };
+
+    function setupAudio() {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 2048;
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+        canvas = document.getElementById('scope');
+        canvasCtx = canvas.getContext('2d');
+    }
+
+    function startSystem() {
+        const bufferSize = audioCtx.sampleRate * 2;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer; noise.loop = true;
+
+        const noiseGain = audioCtx.createGain();
+        noiseGain.gain.value = 0.002;
+
+        const delay1 = audioCtx.createDelay(); delay1.delayTime.value = 0.003; 
+        const delay2 = audioCtx.createDelay(); delay2.delayTime.value = 0.0031;
+        const feedback = audioCtx.createGain(); feedback.gain.value = 0.93; 
+
+        const masterGain = audioCtx.createGain();
+        masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        masterGain.gain.linearRampToValueAtTime(1.2, audioCtx.currentTime + 2);
+
+        noise.connect(noiseGain);
+        noiseGain.connect(delay1); delay1.connect(delay2); delay2.connect(feedback); feedback.connect(delay1);
+        delay2.connect(analyser);
+        analyser.connect(masterGain);
+        masterGain.connect(audioCtx.destination);
+        noise.start();
+    }
+
+    function draw() {
+        requestAnimationFrame(draw);
+        analyser.getByteTimeDomainData(dataArray);
+        canvasCtx.fillStyle = '#000';
+        canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+        canvasCtx.lineWidth = 1;
+        canvasCtx.strokeStyle = '#444'; // La ligne grise/orange discrète
+        canvasCtx.beginPath();
+        let sliceWidth = canvas.width * 1.0 / analyser.frequencyBinCount;
+        let x = 0;
+        for (let i = 0; i < analyser.frequencyBinCount; i++) {
+            let v = dataArray[i] / 128.0;
+            let y = v * canvas.height / 2;
+            if (i === 0) { canvasCtx.moveTo(x, y); } else { canvasCtx.lineTo(x, y); }
+            x += sliceWidth;
+        }
+        canvasCtx.stroke();
+    }
+    </script>
+</body>
+</html>

@@ -1,75 +1,42 @@
-<div id="after-without-container">
-    <button id="power-btn">ACTIVER LE SYSTÈME (AFTER / WITHOUT)</button>
-    <div id="status">ÉTAT : VEILLE HORS-TENSION</div>
-</div>
-
-<script>
-let audioCtx;
-let isRunning = false;
-
-document.getElementById('power-btn').addEventListener('click', function() {
-    if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-
-    if (!isRunning) {
-        startSystem();
-        this.innerText = "COUPER LE SYSTÈME";
-        document.getElementById('status').innerText = "ÉTAT : FONCTIONNEMENT RÉSIDUEL ACTIF";
-        isRunning = true;
-    } else {
-        audioCtx.close();
-        location.reload(); // Réinitialisation propre
-    }
-});
-
-function startSystem() {
-    // 1. Génération du bruit de fond (Le "reste" computationnel)
-    const bufferSize = 2 * audioCtx.sampleRate;
-    const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-    const output = noiseBuffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-        output[i] = Math.random() * 0.002; // Signal quasi-nul
-    }
-
-    const source = audioCtx.createBufferSource();
-    source.buffer = noiseBuffer;
-    source.loop = true;
-
-    // 2. Le Résonateur (Bandpass filter à Q élevé)
-    const resonator = audioCtx.createBiquadFilter();
-    resonator.type = "bandpass";
-    resonator.frequency.value = 440; // Fréquence de résonance du système
-    resonator.Q.value = 40;
-
-    // 3. L'Erosion (Modulation d'amplitude aléatoire)
-    const erosion = audioCtx.createGain();
-    const lfo = audioCtx.createOscillator();
-    lfo.type = 'sawtooth'; 
-    lfo.frequency.value = 8; // Fréquence de l'érosion
-    const lfoGain = audioCtx.createGain();
-    lfoGain.gain.value = 0.5;
+function startAfterWithout() {
+    ctx.resume();
     
-    lfo.connect(lfoGain);
-    lfoGain.connect(erosion.gain);
+    // Source : Bruit de fond très fin
+    const whiteNoise = ctx.createBufferSource();
+    const bufferSize = 2 * ctx.sampleRate;
+    const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 0.005; }
+    whiteNoise.buffer = noiseBuffer;
+    whiteNoise.loop = true;
 
-    // 4. Amplification Extrême (Le maintien du seuil)
-    const massiveGain = audioCtx.createGain();
-    massiveGain.gain.value = 60; // On booste le bruit inaudible
+    // Simulation CORPUS (Comb Filter)
+    // Crée la résonance métallique "Beam"
+    const delay = ctx.createDelay();
+    delay.delayTime.value = 0.0022; // Fréquence de la résonance
+    const feedback = ctx.createGain();
+    feedback.gain.value = 0.95; // Intensité de la résonance
 
-    const limiter = audioCtx.createDynamicsCompressor();
-    limiter.threshold.setValueAtTime(-10, audioCtx.currentTime);
-    limiter.knee.setValueAtTime(40, audioCtx.currentTime);
-    limiter.ratio.setValueAtTime(20, audioCtx.currentTime);
+    // REVERB 100% WET (Convolver ou Delay long)
+    const reverb = ctx.createConvolver(); // Pour un son massif
+    // (Alternative simple : un feedback delay long)
 
-    // Routage
-    source.connect(resonator);
-    resonator.connect(erosion);
-    erosion.connect(massiveGain);
-    massiveGain.connect(limiter);
-    limiter.connect(audioCtx.destination);
+    // COMPRESSION + GAIN (+30dB comme sur ta capture)
+    const compressor = ctx.createDynamicsCompressor();
+    compressor.threshold.setValueAtTime(-50, ctx.currentTime);
+    compressor.ratio.setValueAtTime(12, ctx.currentTime);
+    const makeUpGain = ctx.createGain();
+    makeUpGain.gain.value = 40; 
 
-    source.start();
-    lfo.start();
+    // Routage en boucle pour le Corpus
+    whiteNoise.connect(delay);
+    delay.connect(feedback);
+    feedback.connect(delay); 
+    
+    // Sortie vers la chaîne finale
+    delay.connect(compressor);
+    compressor.connect(makeUpGain);
+    makeUpGain.connect(ctx.destination);
+
+    whiteNoise.start();
 }
-</script>

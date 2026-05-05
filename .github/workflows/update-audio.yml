@@ -1,44 +1,35 @@
-name: Update audio
+name: Dead Prayer Machine
 
 on:
-  workflow_dispatch:
   schedule:
-    - cron: '0 * * * *' # Tourne toutes les heures, par exemple
+    - cron: '*/5 * * * *' # S'exécute toutes les 5 minutes
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    # CRUCIAL : Donne le droit à l'Action d'écrire dans ton repo
     permissions:
       contents: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
 
-      - name: Install dependencies
-        run: |
-          pip install numpy librosa soundfile
+    - name: Install dependencies
+      run: pip install numpy librosa soundfile
 
-      - name: Run machine
-        run: |
-          # On se place dans le dossier du script pour éviter les erreurs de chemin
-          cd content/y-y2/
-          python script.py
+    - name: Run Machine
+      run: python content/dead_prayer_machine/script.py
 
-      - name: Commit and push changes
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          # On ajoute les nouveaux fichiers générés dans le dossier outputs
-          git add content/y-y2/outputs/*.wav
-          # On commit seulement s'il y a des changements pour éviter les erreurs
-          git commit -m "Dégradation sonore : nouvel état" || echo "Pas de changements"
-          git push
+    - name: Commit and push
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add content/dead_prayer_machine/outputs/latest.wav
+        git commit -m "Dead Prayer: mutation" || exit 0
+        git push

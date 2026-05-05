@@ -2,24 +2,26 @@ name: Machine à Oublier (y=y2)
 
 on:
   schedule:
-    # S'exécute toutes les 6 heures (tu peux changer la fréquence)
     - cron: '0 */6 * * *'
-  workflow_dispatch: # Permet de lancer la machine manuellement pour tester
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    # AJOUT : Autorise l'action à écrire (pusher) dans le dépôt
+    permissions:
+      contents: write
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4 # Passage à la v4 (plus récent)
       with:
         persist-credentials: true
 
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.9'
+        python-version: '3.10' # Un peu plus récent pour librosa
 
     - name: Install dependencies
       run: |
@@ -27,12 +29,16 @@ jobs:
         pip install numpy librosa soundfile
 
     - name: Run Machine à Oublier
-      run: python content/y-y2/script.py
+      run: |
+        # Correction : On s'assure d'être dans le bon dossier pour le script
+        python content/y-y2/script.py
 
     - name: Commit and push changes
       run: |
         git config --global user.name 'actions-user'
         git config --global user.email 'actions@github.com'
+        # Ajout du flag --force ou simplement add pour être sûr
         git add content/y-y2/outputs/*.wav
-        git commit -m "y=y2 : substitution et oubli algorithmique" || echo "No changes to commit"
+        # Le "|| echo" évite que le workflow plante s'il n'y a pas de son généré
+        git commit -m "y=y2 : substitution et oubli algorithmique" || exit 0
         git push

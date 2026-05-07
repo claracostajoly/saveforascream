@@ -1,4 +1,4 @@
-name: Dead Prayer Machine
+name: y = y2
 
 on:
   schedule:
@@ -24,12 +24,12 @@ jobs:
       run: pip install numpy librosa soundfile
 
     - name: Run Machine
-      run: python content/dead_prayer_machine/script.py
+      run: python content/y-y2/script.py
 
     - name: Commit and push
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add content/dead_prayer_machine/outputs/latest.wav
-        git commit -m "Dead Prayer: mutation" || exit 0
+        git add content/y-y2/outputs/latest.wav
+        git commit -m "y-y2: mutation" || exit 0
         git push

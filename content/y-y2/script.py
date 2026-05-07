@@ -5,7 +5,7 @@ import os
 import random
 
 # Chemin relatif vers ton dossier de sortie sur GitHub
-OUTPUT_PATH = "content/dead_prayer_machine/outputs/latest.wav"
+OUTPUT_PATH = "content/y = y2/outputs/latest.wav"
 
 sr = 22050
 duration = 20

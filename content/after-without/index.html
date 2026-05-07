@@ -1,57 +1,113 @@
-function startTheVoid() {
-        const now = audioCtx.currentTime;
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>After / Without</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #444;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            cursor: pointer; /* Indique qu'il faut cliquer */
+        }
+        #status {
+            font-size: 12px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            transition: opacity 1s;
+        }
+        .instruction {
+            color: #222;
+            margin-top: 20px;
+            font-size: 10px;
+        }
+    </style>
+</head>
+<body>
 
-        // 1. SOURCE : EROSION NOISE
-        const bufferSize = audioCtx.sampleRate * 4;
-        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-        const data = buffer.getChannelData(0);
-        // On réduit l'amplitude du bruit initial pour avoir plus de contrôle
-        for (let i = 0; i < bufferSize; i++) { data[i] = (Math.random() * 2 - 1) * 0.5; }
-        const source = audioCtx.createBufferSource();
-        source.buffer = buffer; source.loop = true;
+    <div id="status">AFTER / WITHOUT</div>
+    <div class="instruction" id="hint">cliquer pour initier le vide</div>
 
-        const erosionFilter = audioCtx.createBiquadFilter();
-        erosionFilter.type = "lowpass";
-        erosionFilter.frequency.value = 350; // Plus sombre pour moins de fatigue auditive
+    <script>
+        let audioCtx;
 
-        // 2. RÉSEAU DE RÉVERBÉRATION
-        const verbGains = [0.031, 0.057, 0.083, 0.113].map(t => {
-            const d = audioCtx.createDelay();
-            d.delayTime.value = t;
-            const f = audioCtx.createGain();
-            f.gain.value = 0.85; // Baisse stratégique pour éviter l'emballement exponentiel
-            return {d, f};
+        // On attend un clic pour démarrer l'AudioContext (sécurité navigateur)
+        document.body.addEventListener('click', () => {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                startTheVoid();
+                document.getElementById('hint').style.opacity = '0';
+                document.getElementById('status').style.color = '#888';
+            }
         });
 
-        // 3. COMPRESSEUR DE MASSE
-        const compressor = audioCtx.createDynamicsCompressor();
-        compressor.threshold.setValueAtTime(-40, now);
-        compressor.ratio.setValueAtTime(12, now);
-        compressor.attack.setValueAtTime(0.01, now); // Un peu de "mou" pour éviter le clic sec
+        function startTheVoid() {
+            const now = audioCtx.currentTime;
 
-        // 4. PROTECTION FINALE (Le Garde-fou)
-        const limiter = audioCtx.createDynamicsCompressor();
-        limiter.threshold.setValueAtTime(-3.0, now); // On bloque tout à -3dB
-        limiter.ratio.setValueAtTime(20, now);
+            // 1. SOURCE : EROSION NOISE
+            const bufferSize = audioCtx.sampleRate * 4;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            
+            for (let i = 0; i < bufferSize; i++) { 
+                data[i] = (Math.random() * 2 - 1) * 0.5; 
+            }
+            
+            const source = audioCtx.createBufferSource();
+            source.buffer = buffer; 
+            source.loop = true;
 
-        const makeupGain = audioCtx.createGain();
-        makeupGain.gain.setValueAtTime(0, now);
-        // On remplace le 31.6 par 0.8. 
-        // L'effet de "mur de son" viendra de la compression, pas du volume pur.
-        makeupGain.gain.linearRampToValueAtTime(0.8, now + 6); 
+            const erosionFilter = audioCtx.createBiquadFilter();
+            erosionFilter.type = "lowpass";
+            erosionFilter.frequency.value = 350; 
 
-        // --- ROUTAGE ---
-        source.connect(erosionFilter);
-        verbGains.forEach(node => {
-            erosionFilter.connect(node.d);
-            node.d.connect(node.f);
-            node.f.connect(node.d); 
-            node.d.connect(compressor);
-        });
+            // 2. RÉSEAU DE RÉVERBÉRATION
+            const verbGains = [0.031, 0.057, 0.083, 0.113].map(t => {
+                const d = audioCtx.createDelay();
+                d.delayTime.value = t;
+                const f = audioCtx.createGain();
+                f.gain.value = 0.85; 
+                return {d, f};
+            });
 
-        compressor.connect(makeupGain);
-        makeupGain.connect(limiter);
-        limiter.connect(audioCtx.destination);
+            // 3. COMPRESSEUR DE MASSE
+            const compressor = audioCtx.createDynamicsCompressor();
+            compressor.threshold.setValueAtTime(-40, now);
+            compressor.ratio.setValueAtTime(12, now);
+            compressor.attack.setValueAtTime(0.01, now);
 
-        source.start();
-    }
+            // 4. PROTECTION FINALE
+            const limiter = audioCtx.createDynamicsCompressor();
+            limiter.threshold.setValueAtTime(-3.0, now);
+            limiter.ratio.setValueAtTime(20, now);
+
+            const makeupGain = audioCtx.createGain();
+            makeupGain.gain.setValueAtTime(0, now);
+            makeupGain.gain.linearRampToValueAtTime(0.8, now + 6); 
+
+            // --- ROUTAGE ---
+            source.connect(erosionFilter);
+            verbGains.forEach(node => {
+                erosionFilter.connect(node.d);
+                node.d.connect(node.f);
+                node.f.connect(node.d); 
+                node.d.connect(compressor);
+            });
+
+            compressor.connect(makeupGain);
+            makeupGain.connect(limiter);
+            limiter.connect(audioCtx.destination);
+
+            source.start();
+        }
+    </script>
+</body>
+</html>

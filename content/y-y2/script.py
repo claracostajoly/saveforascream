@@ -4,40 +4,44 @@ import soundfile as sf
 import os
 import random
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-OUTPUT_DIR = os.path.join(BASE_DIR, "outputs")
-LATEST_FILE = os.path.join(OUTPUT_DIR, "latest.wav")
-
-if not os.path.exists(OUTPUT_DIR):
-    os.makedirs(OUTPUT_DIR)
+# Chemin relatif vers ton dossier de sortie sur GitHub
+OUTPUT_PATH = "content/dead_prayer_machine/outputs/latest.wav"
 
 sr = 22050
 duration = 20
 
-# 1. POINT DE DÉPART : Le "bruit de fond" du système
-if os.path.exists(LATEST_FILE):
-    y, _ = librosa.load(LATEST_FILE, sr=sr)
+# 1. INITIALISATION OU CHARGEMENT
+if os.path.exists(OUTPUT_PATH):
+    # On charge la trace précédente (le milieu numérique existant)
+    y, _ = librosa.load(OUTPUT_PATH, sr=sr)
 else:
-    # Amplitude de 10^-5 : un silence "technique" qui contient des micro-données
+    # Point de départ minimal : un silence "sale" (bruit de fond quasi inaudible)
+    # On commence à 10^-5 pour laisser la machine "inventer" sa matière
     y = np.random.normal(0, 0.00001, sr * duration)
 
-# 2. LOGIQUE y = y2 (Substitution récursive)
-pitch = random.uniform(-0.3, 0.3) 
-stretch = random.uniform(0.99, 1.01)
+# 2. LES TRANSFORMATIONS (La prière de la machine)
+# On reste sur des valeurs qui favorisent l'émergence d'artefacts
+pitch = random.uniform(-2.0, 2.0)
+stretch = random.uniform(0.85, 1.15)
 
+# Pitch shifting et time stretching créent les "fantômes" sonores
 y2 = librosa.effects.pitch_shift(y, sr=sr, n_steps=pitch)
 y2 = librosa.effects.time_stretch(y2, rate=stretch)
 
-# 3. ÉMERGENCE (L'architecture du gain)
-# Le gain léger (1.02) permet au "vide" de monter en résonance au fil des heures
-y2 = np.tanh(y2 * 1.02)
-y2 += np.random.normal(0, 0.00001, len(y2))
+# 3. L'ACCUMULATION (Saturation et entropie)
+# Le tanh agit comme un mur physique qui écrase le signal
+gain = random.uniform(1.2, 2.0)
+y2 = np.tanh(y2 * gain)
 
-# 4. MAINTIEN DU CADRE
+# Injection de bruit résiduel à chaque cycle (trace à venir)
+y2 += np.random.normal(0, 0.001, len(y2))
+
+# 4. MAINTIEN DU CADRE TEMPOREL (20 secondes)
 if len(y2) < sr * duration:
     y2 = np.pad(y2, (0, sr * duration - len(y2)))
 else:
     y2 = y2[:sr * duration]
 
-# 5. y = y2
-sf.write(LATEST_FILE, y2, sr)
+# 5. SAUVEGARDE DU NOUVEAU RÉSIDU
+# Le fichier est écrasé, la trace évolue
+sf.write(OUTPUT_PATH, y2, sr)

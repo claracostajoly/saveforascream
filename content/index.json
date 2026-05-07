@@ -1,6 +1,6 @@
 [
   {
-    "title": "All I Had to Do Was Wait",
+    "title": "all I had to do was wait",
     "path": "content/all-i-had-to-do-was-wait/"
   },
   {
@@ -24,22 +24,6 @@
     "path": "content/x-hausted/"
   },
   {
-    "title": "x_hausted (1)",
-    "path": "content/x-hausted-1/"
-  },
-  {
-    "title": "x_hausted (2)",
-    "path": "content/x-hausted-2/"
-  },
-  {
-    "title": "x_hausted (3)",
-    "path": "content/x-hausted-3/"
-  },
-  {
-    "title": "x_hausted (4)",
-    "path": "content/x-hausted-4/"
-  },
-  {
     "title": "sidescroll",
     "path": "content/sidescroll/"
   },
@@ -48,11 +32,11 @@
     "path": "content/hold/"
   },
   {
-    "title": "bmo40",
-    "path": "content/bmo40/"
+    "title": "BMo40",
+    "path": "content/BMo40/"
   },
   {
-    "title": "after / without",
+    "title": "after /without",
     "path": "content/after-without/"
   },
   {

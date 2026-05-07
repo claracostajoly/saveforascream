@@ -15,14 +15,16 @@
       margin:0;
       background:var(--bg);
       color:var(--fg);
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       cursor: crosshair;
       -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
     main{
       max-width:680px;
-      margin:100px auto 200px;
+      /* Augmentation de l'espace haut : 250px au lieu de 100px */
+      margin:250px auto 200px;
       padding:0 30px;
     }
 

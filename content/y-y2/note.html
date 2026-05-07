@@ -3,128 +3,122 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>y = y2</title>
+  <title>note_spectre</title>
   <style>
     :root {
       --bg: #000000;
-      --dim: #555;    /* Gris sombre par défaut */
-      --bright: #fff; /* Blanc pur au survol */
+      /* Un blanc légèrement cassé pour ne pas être trop agressif mais bien lisible */
+      --ghost-white: rgba(255, 255, 255, 0.85); 
     }
 
-    /* Police Monospace partout */
     * {
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       box-sizing: border-box;
+      /* Poids de police medium : ni gras, ni trop fin */
+      font-weight: 500; 
+      letter-spacing: -0.01em;
     }
 
     body {
       margin: 0;
       background: var(--bg);
-      color: var(--dim); /* Tout le texte commence en gris sombre */
-      min-height: 180vh; /* Pour permettre le scroll */
+      color: var(--ghost-white);
+      min-height: 250vh; /* Grand espace pour le scroll */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       cursor: crosshair;
     }
 
     main {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 100px 40px;
+      width: 100%;
+      max-width: 600px; /* Largeur du bloc pour qu'il soit bien compact */
+      padding: 100px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
+    /* Le titre a la même taille que le texte */
     h1 {
       font-size: 14px;
-      font-weight: 400;
+      margin-bottom: 60px;
       text-align: center;
-      margin-bottom: 180px;
-      opacity: 0.5;
+      text-transform: lowercase;
     }
 
     h1 a { color: inherit; text-decoration: none; }
 
-    /* Blocs de texte */
-    .text-block {
-      line-height: 1.8;
-      transition: color 0.3s ease, opacity 1s ease, transform 1s ease;
-      margin-bottom: 250px;
+    /* BLOC DE TEXTE PRINCIPAL */
+    .text-container {
+      width: 100%;
+      text-align: justify; /* Justifié pour former un bloc parfait */
+      text-justify: inter-character;
+      line-height: 1.6;
+      font-size: 14px;
     }
 
-    /* Changement de couleur au survol */
-    .text-block:hover {
-      color: var(--bright);
+    /* Le texte de présentation (toujours visible) */
+    .intro {
+      margin-bottom: 50vh; /* Espace avant la suite */
     }
 
-    /* PREMIER TEXTE : GAUCHE */
-    .left-block {
-      text-align: left;
-      max-width: 450px;
-    }
-
-    /* DEUXIÈME TEXTE : DROITE + APPARITION AU SCROLL */
-    .right-block {
-      text-align: right;
-      max-width: 500px;
-      margin-left: auto; /* Pousse à droite */
+    /* LE RESTE DU TEXTE (Apparaît/Disparaît au scroll) */
+    .extra-content {
       opacity: 0;
-      transform: translateY(30px);
+      transition: opacity 0.8s ease-in-out;
+      margin-bottom: 100px;
     }
 
-    .right-block.visible {
+    .extra-content.visible {
       opacity: 1;
-      transform: translateY(0);
     }
 
-    /* Optionnel : couleur encore plus claire pour le texte de droite par défaut */
-    .right-block { color: #333; }
+    /* Suppression des marges de paragraphe pour garder le bloc soudé */
+    p { margin: 0; }
 
   </style>
 </head>
 <body>
 
   <main>
-    <h1><a href="/saveforascream/">after_without_note</a></h1>
+    <h1>after_without_note</h1>
 
-    <div class="text-block left-block">
-      <p>
-        Duplexque isdem diebus acciderat malum, quod et Theophilum insontem atrox interceperat casus, et Serenianus dignus exsecratione cunctorum.
-      </p>
-    </div>
+    <div class="text-container">
+      <div class="intro">
+        <p>
+          Duplexque isdem diebus acciderat malum, quod et Theophilum insontem atrox interceperat casus, et Serenianus dignus exsecratione cunctorum, innoxius, modo non reclamante publico vigore, discessit. Haec ubi latius fama vulgasset missaeque relationes adsiduae Gallum Caesarem permovissent, quoniam magister equitum longius ea tempestate distinebatur, iussus comes orientis Nebridius contractis undique militaribus copiis ad eximendam periculo civitatem amplam et oportunam studio properabat ingenti.
+        </p>
+      </div>
 
-    <div id="scroll-text" class="text-block right-block">
-      <p>
-        Haec ubi latius fama vulgasset missaeque relationes adsiduae Gallum Caesarem permovissent, quoniam magister equitum longius ea tempestate distinebatur, iussus comes orientis Nebridius contractis undique militaribus copiis.
-      </p>
+      <div id="scroll-text" class="extra-content">
+        <p>
+          Post haec indumentum regale quaerebatur et ministris fucandae purpurae tortis confessisque pectoralem tuniculam sine manicis textam, Maras nomine quidam inductus est ut appellant Christiani diaconus, cuius prolatae litterae scriptae Graeco sermone ad Tyrii textrini praepositum celerari speciem perurgebant quam autem non indicabant denique etiam idem ad usque discrimen vitae vexatus nihil fateri conpulsus est.
+        </p>
+      </div>
     </div>
   </main>
 
   <script>
-    const scrollText = document.getElementById('scroll-text');
+    const extraContent = document.getElementById('scroll-text');
 
-    // Détection du scroll pour faire apparaître le texte de droite
     window.addEventListener('scroll', () => {
-      const triggerBottom = window.innerHeight * 0.8;
-      const blockTop = scrollText.getBoundingClientRect().top;
+      // On calcule la position pour faire apparaître/disparaître
+      const trigger = window.innerHeight * 0.7;
+      const contentTop = extraContent.getBoundingClientRect().top;
 
-      if (blockTop < triggerBottom) {
-        scrollText.classList.add('visible');
+      if (contentTop < trigger) {
+        extraContent.classList.add('visible');
       } else {
-        scrollText.classList.remove('visible');
+        // Disparaît quand on remonte
+        extraContent.classList.remove('visible');
       }
     });
 
-    // Double-clic (PC) et Double-tap (Tablette) pour retour
-    let lastTap = 0;
-    const goBack = () => { window.location.href = "index.html"; };
-
-    document.addEventListener('touchend', (e) => {
-      const currentTime = new Date().getTime();
-      const tapLength = currentTime - lastTap;
-      if (tapLength < 300 && tapLength > 0) {
-        goBack();
-      }
-      lastTap = currentTime;
+    // Double-clic retour
+    document.addEventListener("dblclick", () => {
+      window.location.href = "index.html";
     });
-
-    document.addEventListener("dblclick", goBack);
   </script>
 
 </body>

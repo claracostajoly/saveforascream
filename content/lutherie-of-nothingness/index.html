@@ -14,7 +14,6 @@
             text-transform: lowercase; 
             line-height: 1.6;
         }
-
         canvas { 
             width: 400px; 
             height: 60px; 
@@ -24,7 +23,6 @@
             border-top: 1px solid #111; 
             border-bottom: 1px solid #111; 
         }
-
         #btn { 
             cursor: pointer; 
             color: #555; 
@@ -32,17 +30,10 @@
             margin-bottom: 60px;
             text-decoration: underline;
         }
-
         #btn:hover { color: #888; }
-
         .log { margin-bottom: 2px; }
         .data { color: #444; }
-        
-        .manifesto-tiny {
-            margin-top: 100px;
-            max-width: 350px;
-            color: #222;
-        }
+        .manifesto-tiny { margin-top: 100px; max-width: 350px; color: #222; }
     </style>
 </head>
 <body>
@@ -63,7 +54,10 @@
     <script>
     let audioCtx, analyser, dataArray, canvas, canvasCtx;
     let isRunning = false;
-    const delayTimeValue = 0.003; // the "string" length
+    
+    // original physical constants
+    const d1 = 0.003;
+    const d2 = 0.0031;
 
     document.getElementById('btn').onclick = function() {
         if (!audioCtx) setupAudio();
@@ -72,8 +66,7 @@
                 startSystem();
                 this.innerText = "release tension (terminate)";
                 document.getElementById('status-text').innerText = "active_feedback";
-                // frequency = 1 / delayTime
-                document.getElementById('freq-text').innerText = (1 / delayTimeValue).toFixed(2);
+                document.getElementById('freq-text').innerText = (1 / d1).toFixed(2);
                 isRunning = true;
                 draw();
             });
@@ -90,29 +83,26 @@
     }
 
     function startSystem() {
-        // 1. the nothingness (random noise)
         const bufferSize = audioCtx.sampleRate * 2;
         const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
         const data = buffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
+        
         const noise = audioCtx.createBufferSource();
         noise.buffer = buffer; noise.loop = true;
 
         const noiseGain = audioCtx.createGain();
-        noiseGain.gain.value = 0.002; // keeping it low to let resonance emerge
+        noiseGain.gain.value = 0.002;
 
-        // 2. the virtual string (karplus-strong basis)
-        const delay1 = audioCtx.createDelay(); 
-        delay1.delayTime.value = delayTimeValue; 
-        const feedback = audioCtx.createGain(); 
-        feedback.gain.value = 0.94; 
+        // back to original dual-resonator setup
+        const delay1 = audioCtx.createDelay(); delay1.delayTime.value = d1; 
+        const delay2 = audioCtx.createDelay(); delay2.delayTime.value = d2;
+        const feedback = audioCtx.createGain(); feedback.gain.value = 0.94; 
 
-        // 3. texture (darkening the void)
         const lpFilter = audioCtx.createBiquadFilter();
         lpFilter.type = "lowpass";
         lpFilter.frequency.value = 3500; 
 
-        // 4. dynamics (forcing the trace to the surface)
         const compressor = audioCtx.createDynamicsCompressor();
         compressor.threshold.setValueAtTime(-30, audioCtx.currentTime);
         compressor.ratio.setValueAtTime(12, audioCtx.currentTime);
@@ -121,13 +111,14 @@
         masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
         masterGain.gain.linearRampToValueAtTime(1.5, audioCtx.currentTime + 3);
 
-        // routing
+        // the original "wild" routing
         noise.connect(noiseGain);
         noiseGain.connect(delay1);
-        delay1.connect(feedback);
-        feedback.connect(delay1); // the infinite loop
+        delay1.connect(delay2);
+        delay2.connect(feedback);
+        feedback.connect(delay1); // cross-feedback creates the electric texture
         
-        delay1.connect(lpFilter);
+        delay2.connect(lpFilter);
         lpFilter.connect(compressor);
         compressor.connect(analyser);
         analyser.connect(masterGain);
@@ -142,7 +133,7 @@
         canvasCtx.fillStyle = '#000';
         canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
         canvasCtx.lineWidth = 1;
-        canvasCtx.strokeStyle = '#222'; // subtle trace
+        canvasCtx.strokeStyle = '#222';
         canvasCtx.beginPath();
         let sliceWidth = canvas.width * 1.0 / analyser.frequencyBinCount;
         let x = 0;

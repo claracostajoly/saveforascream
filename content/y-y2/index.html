@@ -20,7 +20,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>DEAD PRAYER MACHINE</h1>
+        <h1>y = y2</h1>
         <div class="logic">
             Substitution continue : y = y2<br>
             Régime d'entropie processuelle.<br>
@@ -37,6 +37,10 @@
         // Cache-buster pour charger la trace en temps réel
         source.src = "outputs/latest.wav?t=" + new Date().getTime();
         player.load();
+// Double-clic pour aller à la note
+document.addEventListener("dblclick", () => {
+    window.location.href = "note.html"; 
+});
     </script>
 </body>
 </html>

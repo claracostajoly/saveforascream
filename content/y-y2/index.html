@@ -1,46 +1,106 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>y = y2</title>
     <style>
         body { 
-            background: #000; color: #333; 
+            background: #000; 
+            color: #444; 
             font-family: 'Courier New', monospace; 
-            display: flex; flex-direction: column; 
-            justify-content: center; align-items: center; 
-            height: 100vh; margin: 0; padding: 20px; 
+            font-size: 11px; 
+            padding: 30px; 
+            margin: 0; 
+            text-transform: lowercase; 
+            line-height: 1.6;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-sizing: border-box;
+            overflow: hidden;
         }
-        .container { max-width: 500px; text-align: left; }
-        .logic { color: #555; font-size: 13px; margin-bottom: 2rem; border-left: 2px solid #222; padding-left: 15px; }
-        audio { filter: invert(1); opacity: 0.3; width: 100%; margin-top: 20px; }
-        h1 { color: #f0f0f0; font-size: 18px; letter-spacing: 2px; }
+
+        /* Container pour le monitoring */
+        .status-container {
+            border-left: 1px solid #111;
+            padding-left: 15px;
+        }
+
+        .data { color: #666; }
+
+        /* L'élément audio est caché, on utilise notre propre bouton */
+        audio { display: none; }
+
+        #action-trigger {
+            cursor: pointer;
+            color: #888;
+            text-decoration: underline;
+            margin-top: 20px;
+            display: inline-block;
+        }
+
+        #action-trigger:hover { color: #fff; }
+
+        .manifesto {
+            max-width: 400px;
+            color: #222;
+            font-size: 10px;
+        }
+
+        /* Adaptation Tablette / Mobile */
+        @media (max-width: 768px) {
+            body { padding: 20px; font-size: 10px; }
+            .manifesto { max-width: 100%; }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>y = y2</h1>
-        <div class="logic">
-            Substitution continue : y = y2<br>
-            Régime d'entropie processuelle.<br>
-            Mémoire sans origine.
-        </div>
-        <audio id="player" controls autoplay loop>
-            <source src="outputs/latest.wav" type="audio/wav">
-        </audio>
+
+    <div class="status-container">
+        <div class="log">project : dead_prayer_machine</div>
+        <div class="log">iteration : recursive_output</div>
+        <div class="log">source : content/outputs/latest.wav</div>
+        <div class="log">status : <span id="state" class="data">awaiting_link</span></div>
+        
+        <div id="action-trigger" onclick="toggleAudio()">> open_channel</div>
+    </div>
+
+    <audio id="player" loop>
+        <source src="outputs/latest.wav" type="audio/wav">
+    </audio>
+
+    <div class="manifesto">
+        y = y2 // every 5 minutes, the system reloads its own residue. 
+        the sound you hear is the cumulative error of thousands of 
+        re-processed silences. it is not music; it is the 
+        computational decay of a void.
     </div>
 
     <script>
         const player = document.getElementById('player');
-        const source = player.querySelector('source');
-        // Cache-buster pour charger la trace en temps réel
-        source.src = "outputs/latest.wav?t=" + new Date().getTime();
-        player.load();
-// Double-clic pour aller à la note
-document.addEventListener("dblclick", () => {
-    window.location.href = "note.html"; 
-});
+        const state = document.getElementById('state');
+        const trigger = document.getElementById('action-trigger');
+
+        function toggleAudio() {
+            if (player.paused) {
+                player.play();
+                state.innerText = "streaming_residue";
+                trigger.innerText = "> close_channel";
+                state.style.color = "#aaa";
+            } else {
+                player.pause();
+                state.innerText = "idle";
+                trigger.innerText = "> open_channel";
+                state.style.color = "#444";
+            }
+        }
+
+        // Auto-refresh the page every 5 minutes to get the new file
+        setTimeout(() => {
+            location.reload();
+        }, 300000);
     </script>
 </body>
 </html>

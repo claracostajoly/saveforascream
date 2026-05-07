@@ -7,93 +7,60 @@
   <style>
     :root { 
       --bg: #000; 
-      --text-color: #bbb; /* Ton blanc/gris de référence */
+      --text-color: #bbb; 
       --muted: #555; 
     }
 
     html, body {
-      height: 100%;
-      margin: 0;
-      background: var(--bg);
-      color: var(--text-color);
+      height: 100%; margin: 0;
+      background: var(--bg); color: var(--text-color);
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
+      -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
       overflow: hidden;
     }
 
     a { color: inherit; text-decoration: none; }
 
-    /* TITRE CENTRAL */
     #titre {
-      position: fixed;
-      left: 50%; top: 50%;
+      position: fixed; left: 50%; top: 50%;
       transform: translate(-50%, -50%);
-      font-size: 24px; 
-      font-weight: 400;
-      letter-spacing: .05em;
-      white-space: nowrap;
-      cursor: pointer;
-      user-select: none;
-      z-index: 10;
-      text-transform: lowercase;
+      font-size: 24px; font-weight: 400;
+      letter-spacing: .05em; white-space: nowrap;
+      cursor: pointer; user-select: none; z-index: 10;
       color: var(--text-color);
-      transition: opacity 0.3s ease;
-      opacity: 0.8; /* Légèrement effacé par défaut pour matcher les autres */
+      transition: opacity 0.3s ease; opacity: 0.8;
     }
 
-    #titre:hover {
-      opacity: 1; /* Devient plein gris/blanc au survol */
-    }
+    #titre:hover { opacity: 1; }
 
-    /* Conteneur de la nébuleuse */
     #row {
-      position: fixed;
-      inset: 0;
-      visibility: hidden;
-      opacity: 0;
-      transition: opacity .25s ease;
-      z-index: 1;
+      position: fixed; inset: 0;
+      visibility: hidden; opacity: 0;
+      transition: opacity .25s ease; z-index: 1;
       pointer-events: none;
     }
-    #row.shown {
-      visibility: visible;
-      opacity: 1;
-    }
+    #row.shown { visibility: visible; opacity: 1; }
 
-    /* TITRES D'ŒUVRES */
     .entry {
-      position: absolute;
-      font-size: 14px;
-      font-weight: 400;
-      white-space: nowrap;
-      opacity: .6; /* Plus discret par défaut */
+      position: absolute; font-size: 14px; font-weight: 400;
+      white-space: nowrap; opacity: .6;
       transition: opacity .2s ease, transform .25s ease;
-      padding: .1rem .2rem;
-      pointer-events: auto;
-      text-transform: lowercase;
-      color: var(--text-color); /* Toujours la même base */
+      padding: .1rem .2rem; pointer-events: auto;
+      color: var(--text-color);
+      /* text-transform: lowercase supprimé pour voir les majuscules */
     }
     
-    .entry:hover {
-      opacity: 1; /* Devient var(--text-color) à 100% d'opacité */
-    }
+    .entry:hover { opacity: 1; }
 
     .admin {
-      position: fixed;
-      right: 14px; bottom: 10px;
-      font-size: 11px;
-      color: var(--muted);
-      z-index: 11;
-      text-transform: lowercase;
+      position: fixed; right: 14px; bottom: 10px;
+      font-size: 11px; color: var(--muted); z-index: 11;
     }
   </style>
 </head>
 <body>
   <div id="titre">saveforascream</div>
-
   <div id="row" aria-live="polite"></div>
-
   <a class="admin" href="admin.html">admin</a>
 
   <script>
@@ -106,69 +73,40 @@
 
     function rand(min, max) { return Math.random() * (max - min) + min; }
 
-    function shuffle(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-      return array;
-    }
-
     function scatter() {
       const entries = Array.from(row.children);
       if (!entries.length) return;
 
       const W = window.innerWidth;
       const H = window.innerHeight;
-      const margin = 40;
-
+      const margin = 60;
       const tRect = titre.getBoundingClientRect();
-      const pad = 40;
+      const pad = 60;
       const forbid = {
-        left: tRect.left - pad,
-        right: tRect.right + pad,
-        top: tRect.top - pad,
-        bottom: tRect.bottom + pad
+        left: tRect.left - pad, right: tRect.right + pad,
+        top: tRect.top - pad, bottom: tRect.bottom + pad
       };
 
-      shuffle(entries);
-      entries.forEach(e => row.appendChild(e));
-
       const usedY = [];
-      const minYSpacing = 30;
-      const minMoveDist = 50;
+      const minYSpacing = 35;
 
       entries.forEach(el => {
         const w = el.offsetWidth || 80;
         const h = el.offsetHeight || 20;
-        const prevX = el.dataset.x ? parseFloat(el.dataset.x) : null;
-        const prevY = el.dataset.y ? parseFloat(el.dataset.y) : null;
-
         let x, y, tries = 0;
         while (true) {
           x = rand(margin, W - w - margin);
           y = rand(margin, H - h - margin);
-
           const overlapTitle = !(x + w < forbid.left || x > forbid.right || y + h < forbid.top || y > forbid.bottom);
-
           if (overlapTitle && tries < 50) { tries++; continue; }
-
           let tooCloseY = false;
           for (const yUsed of usedY) {
             if (Math.abs(y - yUsed) < minYSpacing) { tooCloseY = true; break; }
           }
           if (tooCloseY && tries < 80) { tries++; continue; }
-
-          if (prevX !== null && prevY !== null) {
-            const dist = Math.hypot(x - prevX, y - prevY);
-            if (dist < minMoveDist && tries < 100) { tries++; continue; }
-          }
-
           usedY.push(y);
           break;
         }
-        el.dataset.x = x;
-        el.dataset.y = y;
         el.style.transform = `translate(${x}px, ${y}px)`;
       });
     }
@@ -196,10 +134,11 @@
 
     window.addEventListener('resize', () => { if (shown) scatter(); });
 
-    fetch(JSON_PATH + '?_=' + Date.now())
+    // Chargement du JSON avec correction du cache
+    fetch(JSON_PATH + '?_=(new Date()).getTime()')
       .then(r => r.json())
       .then(list => { works = list; })
-      .catch(() => { works = [{ title: 'error loading index.json', path: '#' }]; });
+      .catch(err => { console.error("Erreur JSON:", err); });
   </script>
 </body>
 </html>

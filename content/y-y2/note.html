@@ -7,23 +7,26 @@
   <style>
     :root {
       --bg: #000000;
-      /* Un blanc légèrement cassé pour ne pas être trop agressif mais bien lisible */
-      --ghost-white: rgba(255, 255, 255, 0.85); 
+      /* Gris clair neutre, moins agressif que le blanc pur */
+      --text-color: #bbb; 
     }
 
     * {
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      /* Pile de polices monospace pour assurer la finesse */
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       box-sizing: border-box;
-      /* Poids de police medium : ni gras, ni trop fin */
-      font-weight: 500; 
-      letter-spacing: -0.01em;
+      /* Poids standard pour éviter l'effet "gras" */
+      font-weight: 400; 
+      /* Pour affiner le rendu des polices blanches sur fond noir */
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
     body {
       margin: 0;
       background: var(--bg);
-      color: var(--ghost-white);
-      min-height: 250vh; /* Grand espace pour le scroll */
+      color: var(--text-color);
+      min-height: 220vh; 
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -32,49 +35,40 @@
 
     main {
       width: 100%;
-      max-width: 600px; /* Largeur du bloc pour qu'il soit bien compact */
-      padding: 100px 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      max-width: 600px; 
+      padding: 120px 25px;
     }
 
-    /* Le titre a la même taille que le texte */
     h1 {
       font-size: 14px;
-      margin-bottom: 60px;
+      margin-bottom: 80px;
       text-align: center;
       text-transform: lowercase;
+      color: var(--text-color);
     }
 
-    h1 a { color: inherit; text-decoration: none; }
-
-    /* BLOC DE TEXTE PRINCIPAL */
     .text-container {
       width: 100%;
-      text-align: justify; /* Justifié pour former un bloc parfait */
-      text-justify: inter-character;
-      line-height: 1.6;
+      /* Bloc parfaitement aligné */
+      text-align: justify;
+      line-height: 1.7;
       font-size: 14px;
     }
 
-    /* Le texte de présentation (toujours visible) */
     .intro {
-      margin-bottom: 50vh; /* Espace avant la suite */
+      margin-bottom: 60vh; 
     }
 
-    /* LE RESTE DU TEXTE (Apparaît/Disparaît au scroll) */
     .extra-content {
       opacity: 0;
-      transition: opacity 0.8s ease-in-out;
-      margin-bottom: 100px;
+      /* Transition plus lente pour un effet d'apparition vaporeux */
+      transition: opacity 1.5s ease;
     }
 
     .extra-content.visible {
       opacity: 1;
     }
 
-    /* Suppression des marges de paragraphe pour garder le bloc soudé */
     p { margin: 0; }
 
   </style>
@@ -87,13 +81,13 @@
     <div class="text-container">
       <div class="intro">
         <p>
-          Duplexque isdem diebus acciderat malum, quod et Theophilum insontem atrox interceperat casus, et Serenianus dignus exsecratione cunctorum, innoxius, modo non reclamante publico vigore, discessit. Haec ubi latius fama vulgasset missaeque relationes adsiduae Gallum Caesarem permovissent, quoniam magister equitum longius ea tempestate distinebatur, iussus comes orientis Nebridius contractis undique militaribus copiis ad eximendam periculo civitatem amplam et oportunam studio properabat ingenti.
+          [TON TEXTE DE PRÉSENTATION ICI] - Duplexque isdem diebus acciderat malum, quod et Theophilum insontem atrox interceperat casus, et Serenianus dignus exsecratione cunctorum, innoxius, modo non reclamante publico vigore, discessit. Haec ubi latius fama vulgasset missaeque relationes adsiduae Gallum Caesarem permovissent.
         </p>
       </div>
 
       <div id="scroll-text" class="extra-content">
         <p>
-          Post haec indumentum regale quaerebatur et ministris fucandae purpurae tortis confessisque pectoralem tuniculam sine manicis textam, Maras nomine quidam inductus est ut appellant Christiani diaconus, cuius prolatae litterae scriptae Graeco sermone ad Tyrii textrini praepositum celerari speciem perurgebant quam autem non indicabant denique etiam idem ad usque discrimen vitae vexatus nihil fateri conpulsus est.
+          [TON TEXTE DÉTAILLÉ ICI] - Post haec indumentum regale quaerebatur et ministris fucandae purpurae tortis confessisque pectoralem tuniculam sine manicis textam, Maras nomine quidam inductus est ut appellant Christiani diaconus, cuius prolatae litterae scriptae Graeco sermone ad Tyrii textrini praepositum celerari speciem perurgebant.
         </p>
       </div>
     </div>
@@ -103,19 +97,16 @@
     const extraContent = document.getElementById('scroll-text');
 
     window.addEventListener('scroll', () => {
-      // On calcule la position pour faire apparaître/disparaître
-      const trigger = window.innerHeight * 0.7;
+      const trigger = window.innerHeight * 0.75;
       const contentTop = extraContent.getBoundingClientRect().top;
 
       if (contentTop < trigger) {
         extraContent.classList.add('visible');
       } else {
-        // Disparaît quand on remonte
         extraContent.classList.remove('visible');
       }
     });
 
-    // Double-clic retour
     document.addEventListener("dblclick", () => {
       window.location.href = "index.html";
     });

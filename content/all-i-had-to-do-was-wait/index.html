@@ -4,114 +4,60 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>oeuvres</title>
-
   <style>
-    :root{
-      --bg:#000;
-      --fg:#888;
-    }
-
+    :root{ --bg:#000; --fg:#888; }
     html,body{
-      margin:0;
-      background:var(--bg);
-      color:var(--fg);
+      margin:0; background:var(--bg); color:var(--fg);
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      cursor: crosshair;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
+      cursor: crosshair; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
     }
-
-    main{
-      max-width:680px;
-      /* Augmentation de l'espace haut : 250px au lieu de 100px */
-      margin:250px auto 200px;
-      padding:0 30px;
-    }
-
-    figure{
-      margin:140px 0;
-      width: 100%;
-    }
-
-    img, video{
-      width:100%;
-      height:auto;
-      display:block;
-      background:#0a0a0a;
-    }
-
-    /* AUDIO : Look sombre pour le lecteur */
-    audio {
-      width: 100%;
-      margin-top: 10px;
-      filter: invert(100%) hue-rotate(180deg) brightness(0.6);
-    }
-
+    main{ max-width:680px; margin:250px auto 200px; padding:0 30px; }
+    figure{ margin:140px 0; width: 100%; }
+    img, video{ width:100%; height:auto; display:block; background:#0a0a0a; }
+    audio { width: 100%; margin-top: 10px; filter: invert(100%) hue-rotate(180deg) brightness(0.6); }
   </style>
 </head>
-
 <body>
   <main>
-
-    <figure>
-      <img src="../assets/images/wait-03.png" alt="">
-    </figure>
-
-    <figure>
-      <img src="../assets/images/wait-04.png" alt="">
-    </figure>
-
-    <figure>
-      <img src="../assets/images/wait-02.png" alt="">
-    </figure>
-
+    <figure><img src="../assets/images/wait-03.png" alt=""></figure>
+    <figure><img src="../assets/images/wait-04.png" alt=""></figure>
+    <figure><img src="../assets/images/wait-02.png" alt=""></figure>
     <figure>
       <video playsinline loop muted autoplay>
         <source src="../assets/videos/ton-video.mp4" type="video/mp4">
       </video>
     </figure>
-
     <figure>
-      <audio controls>
-        <source src="../assets/sounds/ton-audio.mp3" type="audio/mpeg">
-      </audio>
+      <audio controls><source src="../assets/sounds/ton-audio.mp3" type="audio/mpeg"></audio>
     </figure>
-
   </main>
 
   <script>
-    // NAVIGATION IDENTIQUE AUX NOTES
     let clickTimer = null;
-
     document.addEventListener('click', (e) => {
-      // On ne déclenche pas le retour si on clique sur les réglages audio/vidéo
       if (e.target.tagName === 'VIDEO' || e.target.tagName === 'AUDIO' || e.target.closest('audio')) return;
-
       if (clickTimer === null) {
         clickTimer = setTimeout(() => {
           clickTimer = null;
-          window.history.back(); // 1 CLIC : Retour page précédente
+          window.history.back(); // 1 CLIC : Retour Nébuleuse
         }, 300);
       } else {
         clearTimeout(clickTimer);
         clickTimer = null;
-        window.location.href = "../../index.html"; // 2 CLICS : Retour accueil
+        window.location.href = "note.html"; // 2 CLICS : Vers la NOTE
       }
     });
 
-    // DOUBLE TAP MOBILE POUR L'ACCUEIL
     let lastTap = 0;
     document.addEventListener('touchend', (e) => {
       if (e.target.tagName === 'VIDEO' || e.target.tagName === 'AUDIO') return;
-      
       const currentTime = new Date().getTime();
       const tapLength = currentTime - lastTap;
       if (tapLength < 300 && tapLength > 0) {
-        window.location.href = "../../index.html";
+        window.location.href = "note.html"; // DOUBLE TAP MOBILE : Vers la NOTE
       }
       lastTap = currentTime;
     });
   </script>
-
 </body>
 </html>

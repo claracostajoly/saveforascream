@@ -3,17 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>y = y2_note</title>
+  <title>note_template</title>
   <style>
     :root {
       --bg: #000000;
-      --text-color: #bbb;
+      --text-color: #bbb; 
     }
 
     * {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       box-sizing: border-box;
-      font-weight: 400;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
@@ -22,69 +21,90 @@
       margin: 0;
       background: var(--bg);
       color: var(--text-color);
-      min-height: 180vh;
+      min-height: 180vh; 
       display: flex;
       flex-direction: column;
       align-items: center;
       cursor: crosshair;
     }
 
+    /* SIGNATURE : 12px (comme demandé) */
+    .site-nav {
+      position: fixed;
+      top: 20px;
+      font-size: 12px;
+      text-decoration: none;
+      color: var(--text-color);
+      opacity: 0.6;
+      transition: opacity 0.3s ease;
+      z-index: 100;
+    }
+    .site-nav:hover { opacity: 1; }
+
     main {
       width: 100%;
-      max-width: 600px;
+      max-width: 600px; 
       padding: 120px 25px;
     }
 
+    /* TITRE NOTE : 14px (comme les titres d'accueil) */
     h1 {
-      /* TAILLE DU TITRE AUGMENTÉE ICI */
-      /* font-size: 16px; ou clamp pour le responsive */
-      font-size: clamp(14px, 2vw, 18px); 
-      /* Espacement ajusté sous le titre pour compenser la taille */
-      margin-bottom: 130px; 
+      font-size: 14px;
+      font-weight: 400;
+      margin-bottom: 150px; 
       text-align: center;
       text-transform: lowercase;
-      color: var(--text-color);
+      opacity: 0.8;
     }
 
+    /* TEXTE EN BLOC : Justifié + 14px */
     .text-container {
       width: 100%;
-      text-align: justify;
+      text-align: justify; /* C'est ici que le "bloc" se crée */
+      text-justify: inter-character; /* Force l'alignement parfait */
       line-height: 1.7;
       font-size: 14px;
     }
 
-    .intro {
-      margin-bottom: 15vh;
+    p { 
+      margin: 0; 
+      font-weight: 300; /* Plus fin pour le contraste */
+      letter-spacing: 0.02em;
+      opacity: 0.8;
+      transition: opacity 0.4s ease;
     }
+
+    p:hover { opacity: 1; }
+
+    .intro { margin-bottom: 15vh; }
 
     .extra-content {
       opacity: 0;
       transition: opacity 1.5s ease;
     }
 
-    .extra-content.visible {
-      opacity: 1;
-    }
-
-    p { margin: 0; }
+    .extra-content.visible { opacity: 0.8; }
+    .extra-content.visible:hover { opacity: 1; }
 
   </style>
 </head>
 <body>
 
+  <a href="../../" class="site-nav">saveforascream</a>
+
   <main>
-    <h1>after_without_note</h1>
+    <h1>titre_de_la_note</h1>
 
     <div class="text-container">
       <div class="intro">
         <p>
-          Duplexque isdem diebus acciderat malum, quod et Theophilum insontem atrox interceperat casus, et Serenianus dignus exsecratione cunctorum, innoxius, modo non reclamante publico vigore, discessit. Haec ubi latius fama vulgasset missaeque relationes adsiduae Gallum Caesarem permovissent, quoniam magister equitum longius ea tempestate distinebatur.
+          Ton texte principal ici. Il s'aligne parfaitement à gauche et à droite pour former un rectangle de caractères. La police monospace renforce cet aspect "bloc de code" ou "archive système".
         </p>
       </div>
 
       <div id="scroll-text" class="extra-content">
         <p>
-          Post haec indumentum regale quaerebatur et ministris fucandae purpurae tortis confessisque pectoralem tuniculam sine manicis textam, Maras nomine quidam inductus est ut appellant Christiani diaconus, cuius prolatae litterae scriptae Graeco sermone ad Tyrii textrini praepositum celerari speciem perurgebant.
+          Ton texte secondaire ici. Il suit la même règle de justification. Rien ne dépasse des marges, créant une colonne textuelle propre et stable au milieu du noir.
         </p>
       </div>
     </div>
@@ -92,12 +112,9 @@
 
   <script>
     const extraContent = document.getElementById('scroll-text');
-
     window.addEventListener('scroll', () => {
       const trigger = window.innerHeight * 0.8;
-      const contentTop = extraContent.getBoundingClientRect().top;
-
-      if (contentTop < trigger) {
+      if (extraContent.getBoundingClientRect().top < trigger) {
         extraContent.classList.add('visible');
       } else {
         extraContent.classList.remove('visible');
@@ -105,7 +122,7 @@
     });
 
     document.addEventListener("dblclick", () => {
-      window.location.href = "index.html";
+      window.location.href = "../../index.html";
     });
   </script>
 

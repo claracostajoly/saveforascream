@@ -7,8 +7,7 @@
   <style>
     :root { 
       --bg: #000; 
-      /* Gris cohérent avec tes notes */
-      --text-color: #bbb; 
+      --text-color: #bbb; /* Ton blanc/gris de référence */
       --muted: #555; 
     }
 
@@ -17,7 +16,6 @@
       margin: 0;
       background: var(--bg);
       color: var(--text-color);
-      /* Police monospace appliquée partout */
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
@@ -26,7 +24,7 @@
 
     a { color: inherit; text-decoration: none; }
 
-    /* TITRE CENTRAL : Plus petit (24px) et même couleur */
+    /* TITRE CENTRAL */
     #titre {
       position: fixed;
       left: 50%; top: 50%;
@@ -40,6 +38,12 @@
       z-index: 10;
       text-transform: lowercase;
       color: var(--text-color);
+      transition: opacity 0.3s ease;
+      opacity: 0.8; /* Légèrement effacé par défaut pour matcher les autres */
+    }
+
+    #titre:hover {
+      opacity: 1; /* Devient plein gris/blanc au survol */
     }
 
     /* Conteneur de la nébuleuse */
@@ -57,22 +61,22 @@
       opacity: 1;
     }
 
-    /* TITRES D'ŒUVRES : 14px et même couleur */
+    /* TITRES D'ŒUVRES */
     .entry {
       position: absolute;
       font-size: 14px;
       font-weight: 400;
       white-space: nowrap;
-      opacity: .7; /* Un peu plus effacé par défaut */
-      transition: color .25s ease, opacity .2s ease, transform .25s ease;
+      opacity: .6; /* Plus discret par défaut */
+      transition: opacity .2s ease, transform .25s ease;
       padding: .1rem .2rem;
       pointer-events: auto;
       text-transform: lowercase;
+      color: var(--text-color); /* Toujours la même base */
     }
     
     .entry:hover {
-      opacity: 1;
-      color: #fff; /* Éclairage au survol */
+      opacity: 1; /* Devient var(--text-color) à 100% d'opacité */
     }
 
     .admin {

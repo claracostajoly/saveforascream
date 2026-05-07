@@ -2,61 +2,130 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <title>y = y2_note</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>after_without_note</title>
   <style>
-    :root{
-      --bg:#000000; /* Fond noir */
-      --fg:#ffffff; /* Texte blanc */
-      --muted:#999;
+    :root {
+      --bg: #000000;
+      --dim: #555;    /* Gris sombre par défaut */
+      --bright: #fff; /* Blanc pur au survol */
     }
-    html,body{
-      margin:0;
-      background:var(--bg);
-      color:var(--fg);
+
+    /* Police Monospace partout */
+    * {
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size:14px;
+      box-sizing: border-box;
     }
-    main{
-      max-width:680px;
-      margin:220px auto 160px;
-      padding:0 30px;
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--dim); /* Tout le texte commence en gris sombre */
+      min-height: 180vh; /* Pour permettre le scroll */
+      cursor: crosshair;
     }
-    a{ color:inherit; text-decoration:none; }
-    h1{
-      font-size:clamp(12px,1.6vw,16px);
-      font-weight:400;
-      letter-spacing:0.02em;
-      margin:0;
-      margin-bottom:140px;
-      text-align:center;
-      opacity:0.7;
+
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 100px 40px;
     }
-    p{
-      line-height:1.7;
-      opacity:0.75;
-      margin:0;
-      text-align:left;
-      color:var(--fg); /* Texte plus lisible en blanc */
+
+    h1 {
+      font-size: 14px;
+      font-weight: 400;
+      text-align: center;
+      margin-bottom: 180px;
+      opacity: 0.5;
     }
+
+    h1 a { color: inherit; text-decoration: none; }
+
+    /* Blocs de texte */
+    .text-block {
+      line-height: 1.8;
+      transition: color 0.3s ease, opacity 1s ease, transform 1s ease;
+      margin-bottom: 250px;
+    }
+
+    /* Changement de couleur au survol */
+    .text-block:hover {
+      color: var(--bright);
+    }
+
+    /* PREMIER TEXTE : GAUCHE */
+    .left-block {
+      text-align: left;
+      max-width: 450px;
+    }
+
+    /* DEUXIÈME TEXTE : DROITE + APPARITION AU SCROLL */
+    .right-block {
+      text-align: right;
+      max-width: 500px;
+      margin-left: auto; /* Pousse à droite */
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    .right-block.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Optionnel : couleur encore plus claire pour le texte de droite par défaut */
+    .right-block { color: #333; }
+
   </style>
 </head>
 <body>
+
   <main>
     <h1><a href="/saveforascream/">after_without_note</a></h1>
-    <p>
-    Duplexque isdem diebus acciderat malum, quod et Theophilum insontem atrox interceperat casus, et Serenianus dignus exsecratione cunctorum, innoxius, modo non reclamante publico vigore, discessit.
 
-Haec ubi latius fama vulgasset missaeque relationes adsiduae Gallum Caesarem permovissent, quoniam magister equitum longius ea tempestate distinebatur, iussus comes orientis Nebridius contractis undique militaribus copiis ad eximendam periculo civitatem amplam et oportunam studio properabat ingenti, quo cognito abscessere latrones nulla re amplius memorabili gesta, dispersique ut solent avia montium petiere celsorum.
+    <div class="text-block left-block">
+      <p>
+        Duplexque isdem diebus acciderat malum, quod et Theophilum insontem atrox interceperat casus, et Serenianus dignus exsecratione cunctorum.
+      </p>
+    </div>
 
-Post haec indumentum regale quaerebatur et ministris fucandae purpurae tortis confessisque pectoralem tuniculam sine manicis textam, Maras nomine quidam inductus est ut appellant Christiani diaconus, cuius prolatae litterae scriptae Graeco sermone ad Tyrii textrini praepositum celerari speciem perurgebant quam autem non indicabant denique etiam idem ad usque discrimen vitae vexatus nihil fateri conpulsus est.
-    </p>
+    <div id="scroll-text" class="text-block right-block">
+      <p>
+        Haec ubi latius fama vulgasset missaeque relationes adsiduae Gallum Caesarem permovissent, quoniam magister equitum longius ea tempestate distinebatur, iussus comes orientis Nebridius contractis undique militaribus copiis.
+      </p>
+    </div>
   </main>
 
   <script>
-    // Double-clic pour retour à l’œuvre
-    document.addEventListener("dblclick", () => {
-      window.location.href = "index.html";
+    const scrollText = document.getElementById('scroll-text');
+
+    // Détection du scroll pour faire apparaître le texte de droite
+    window.addEventListener('scroll', () => {
+      const triggerBottom = window.innerHeight * 0.8;
+      const blockTop = scrollText.getBoundingClientRect().top;
+
+      if (blockTop < triggerBottom) {
+        scrollText.classList.add('visible');
+      } else {
+        scrollText.classList.remove('visible');
+      }
     });
+
+    // Double-clic (PC) et Double-tap (Tablette) pour retour
+    let lastTap = 0;
+    const goBack = () => { window.location.href = "index.html"; };
+
+    document.addEventListener('touchend', (e) => {
+      const currentTime = new Date().getTime();
+      const tapLength = currentTime - lastTap;
+      if (tapLength < 300 && tapLength > 0) {
+        goBack();
+      }
+      lastTap = currentTime;
+    });
+
+    document.addEventListener("dblclick", goBack);
   </script>
+
 </body>
 </html>

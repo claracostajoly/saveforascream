@@ -1,1 +1,116 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>oeuvre_template</title>
+  <style>
+    :root {
+      --bg: #000;
+      --fg: #888; /* Gris discret comme pour le texte des notes */
+    }
 
+    html, body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      cursor: crosshair;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    main {
+      max-width: 680px;
+      margin: 100px auto 200px; /* Espace réduit en haut car plus de titre */
+      padding: 0 30px;
+    }
+
+    /* CONTENEURS MÉDIAS */
+    figure {
+      margin: 120px 0;
+      width: 100%;
+    }
+
+    img, video {
+      width: 100%;
+      height: auto;
+      display: block;
+      background: #050505;
+      transition: opacity 0.3s ease;
+    }
+
+    /* AUDIO STYLE DISCRET */
+    audio {
+      width: 100%;
+      height: 30px;
+      margin-top: 10px;
+      filter: invert(100%) hue-rotate(180deg) brightness(0.7); /* Rend le lecteur gris/noir */
+    }
+
+    video:focus, audio:focus {
+      outline: none;
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <main>
+    
+    <figure>
+      <img src="../assets/images/image.png" alt="">
+    </figure>
+
+    <figure>
+      <video playsinline loop muted autoplay>
+        <source src="../assets/videos/video.mp4" type="video/mp4">
+      </video>
+    </figure>
+
+    <figure>
+      <audio controls>
+        <source src="../assets/sounds/audio.mp3" type="audio/mpeg">
+      </audio>
+    </figure>
+
+  </main>
+
+  <script>
+    // NAVIGATION IDENTIQUE AUX NOTES
+    
+    // 1. CLIC SIMPLE N'IMPORTE OÙ → RETOUR PRÉCÉDENT
+    let clickTimer = null;
+    document.addEventListener('click', (e) => {
+      // On ignore le clic s'il est sur les contrôles audio ou vidéo
+      if (e.target.tagName === 'VIDEO' || e.target.tagName === 'AUDIO') return;
+
+      if (clickTimer === null) {
+        clickTimer = setTimeout(() => {
+          clickTimer = null;
+          window.history.back(); // Un clic = Précédent
+        }, 300);
+      } else {
+        // 2. DOUBLE CLIC SUR LE FOND → ACCUEIL
+        clearTimeout(clickTimer);
+        clickTimer = null;
+        window.location.href = "../../index.html";
+      }
+    });
+
+    // DOUBLE TAP MOBILE POUR L'ACCUEIL
+    let lastTap = 0;
+    document.addEventListener('touchend', (e) => {
+      if (e.target.tagName === 'VIDEO' || e.target.tagName === 'AUDIO') return;
+      
+      const currentTime = new Date().getTime();
+      const tapLength = currentTime - lastTap;
+      if (tapLength < 300 && tapLength > 0) {
+        window.location.href = "../../index.html";
+      }
+      lastTap = currentTime;
+    });
+  </script>
+
+</body>
+</html>

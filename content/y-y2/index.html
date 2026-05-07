@@ -2,18 +2,41 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>y = y2 | Machine à oublier</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>y = y2</title>
     <style>
-        body { background: #000; color: #1a1a1a; font-family: monospace; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .status { font-size: 10px; color: #222; letter-spacing: 5px; text-transform: uppercase; }
-        audio { filter: invert(1); opacity: 0.2; margin-top: 20px; }
+        body { 
+            background: #000; color: #333; 
+            font-family: 'Courier New', monospace; 
+            display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; 
+            height: 100vh; margin: 0; padding: 20px; 
+        }
+        .container { max-width: 500px; text-align: left; }
+        .logic { color: #555; font-size: 13px; margin-bottom: 2rem; border-left: 2px solid #222; padding-left: 15px; }
+        audio { filter: invert(1); opacity: 0.3; width: 100%; margin-top: 20px; }
+        h1 { color: #f0f0f0; font-size: 18px; letter-spacing: 2px; }
     </style>
 </head>
 <body>
-    <div class="status">Substitution en cours : y = y2</div>
-    <!-- Remplace le chiffre par le numéro du dernier fichier généré par ton script -->
-    <audio controls loop>
-        <source src="outputs/state_0001.wav" type="audio/wav">
-    </audio>
+    <div class="container">
+        <h1>DEAD PRAYER MACHINE</h1>
+        <div class="logic">
+            Substitution continue : y = y2<br>
+            Régime d'entropie processuelle.<br>
+            Mémoire sans origine.
+        </div>
+        <audio id="player" controls autoplay loop>
+            <source src="outputs/latest.wav" type="audio/wav">
+        </audio>
+    </div>
+
+    <script>
+        const player = document.getElementById('player');
+        const source = player.querySelector('source');
+        // Cache-buster pour charger la trace en temps réel
+        source.src = "outputs/latest.wav?t=" + new Date().getTime();
+        player.load();
+    </script>
 </body>
 </html>

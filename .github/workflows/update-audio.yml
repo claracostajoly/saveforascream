@@ -3,7 +3,7 @@ name: y = y2
 on:
   schedule:
     - cron: '*/5 * * * *' # S'exécute toutes les 5 minutes
-  workflow_dispatch:
+  workflow_dispatch:      # Permet de le lancer manuellement pour tester
 
 jobs:
   build:
@@ -30,6 +30,8 @@ jobs:
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
+        # On ajoute le son ET le compteur
         git add content/y-y2/outputs/latest.wav
+        git add content/y-y2/outputs/count.txt
         git commit -m "y-y2: mutation" || exit 0
         git push

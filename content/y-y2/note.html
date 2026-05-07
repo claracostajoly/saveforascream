@@ -3,24 +3,24 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>note_template</title>
+  <title>note_spectre</title>
   <style>
     :root {
       --bg: #000000;
-      --text-color: #bbb; 
+      --titre-color: #bbb; /* Plus clair */
+      --texte-color: #888; /* Plus sombre et discret */
     }
 
     * {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       box-sizing: border-box;
       -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
     }
 
     body {
       margin: 0;
       background: var(--bg);
-      color: var(--text-color);
+      color: var(--texte-color);
       min-height: 180vh; 
       display: flex;
       flex-direction: column;
@@ -28,18 +28,17 @@
       cursor: crosshair;
     }
 
-    /* SIGNATURE : 12px (comme demandé) */
+    /* SIGNATURE EN HAUT */
     .site-nav {
       position: fixed;
       top: 20px;
       font-size: 12px;
       text-decoration: none;
-      color: var(--text-color);
-      opacity: 0.6;
-      transition: opacity 0.3s ease;
+      color: var(--texte-color);
+      opacity: 0.5;
+      font-weight: 400;
       z-index: 100;
     }
-    .site-nav:hover { opacity: 1; }
 
     main {
       width: 100%;
@@ -47,34 +46,37 @@
       padding: 120px 25px;
     }
 
-    /* TITRE NOTE : 14px (comme les titres d'accueil) */
+    /* TITRE DE LA NOTE */
     h1 {
       font-size: 14px;
       font-weight: 400;
       margin-bottom: 150px; 
       text-align: center;
       text-transform: lowercase;
-      opacity: 0.8;
+      color: var(--titre-color); /* Plus clair que le texte */
+      cursor: pointer;
+      transition: color 0.3s ease;
+      user-select: none;
     }
+    h1:hover { color: #fff; }
 
-    /* TEXTE EN BLOC : Justifié + 14px */
+    /* TEXTE EN BLOC */
     .text-container {
       width: 100%;
-      text-align: justify; /* C'est ici que le "bloc" se crée */
-      text-justify: inter-character; /* Force l'alignement parfait */
+      text-align: justify;
       line-height: 1.7;
       font-size: 14px;
     }
 
     p { 
       margin: 0; 
-      font-weight: 300; /* Plus fin pour le contraste */
+      font-weight: 300; /* Plus fin */
       letter-spacing: 0.02em;
-      opacity: 0.8;
-      transition: opacity 0.4s ease;
+      color: var(--texte-color);
+      transition: color 0.4s ease, opacity 0.4s ease;
     }
 
-    p:hover { opacity: 1; }
+    p:hover { color: #fff; }
 
     .intro { margin-bottom: 15vh; }
 
@@ -82,36 +84,53 @@
       opacity: 0;
       transition: opacity 1.5s ease;
     }
-
-    .extra-content.visible { opacity: 0.8; }
-    .extra-content.visible:hover { opacity: 1; }
+    .extra-content.visible { opacity: 1; }
 
   </style>
 </head>
 <body>
 
-  <a href="../../" class="site-nav">saveforascream</a>
+  <a href="../../index.html" class="site-nav">saveforascream</a>
 
   <main>
-    <h1>titre_de_la_note</h1>
+    <h1 id="note-title">after_without_note</h1>
 
     <div class="text-container">
       <div class="intro">
-        <p>
-          Ton texte principal ici. Il s'aligne parfaitement à gauche et à droite pour former un rectangle de caractères. La police monospace renforce cet aspect "bloc de code" ou "archive système".
-        </p>
+        <p>Duplexque isdem diebus acciderat malum, quod et Theophilum insontem atrox interceperat casus, et Serenianus dignus exsecratione cunctorum.</p>
       </div>
 
       <div id="scroll-text" class="extra-content">
-        <p>
-          Ton texte secondaire ici. Il suit la même règle de justification. Rien ne dépasse des marges, créant une colonne textuelle propre et stable au milieu du noir.
-        </p>
+        <p>Post haec indumentum regale quaerebatur et ministris fucandae purpurae tortis confessisque pectoralem tuniculam sine manicis textam.</p>
       </div>
     </div>
   </main>
 
   <script>
+    const title = document.getElementById('note-title');
     const extraContent = document.getElementById('scroll-text');
+    
+    // GESTION DU CLIC / DOUBLE CLIC (Marche sur Mobile)
+    let clickTimer = null;
+
+    title.addEventListener('click', () => {
+      if (clickTimer === null) {
+        // Premier clic : on attend un peu pour voir s'il y en a un deuxième
+        clickTimer = setTimeout(() => {
+          clickTimer = null;
+          // Action 1 clic : Page précédente
+          window.history.back();
+        }, 300); // 300ms de délai
+      } else {
+        // Deuxième clic détecté !
+        clearTimeout(clickTimer);
+        clickTimer = null;
+        // Action 2 clics : Accueil
+        window.location.href = "../../index.html";
+      }
+    });
+
+    // APPARITION AU SCROLL
     window.addEventListener('scroll', () => {
       const trigger = window.innerHeight * 0.8;
       if (extraContent.getBoundingClientRect().top < trigger) {
@@ -119,10 +138,6 @@
       } else {
         extraContent.classList.remove('visible');
       }
-    });
-
-    document.addEventListener("dblclick", () => {
-      window.location.href = "../../index.html";
     });
   </script>
 

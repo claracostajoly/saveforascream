@@ -2,11 +2,13 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>oeuvres</title>
 
   <style>
     :root{
       --bg:#000;
-      --fg:#ccc;
+      --fg:#888;
     }
 
     html,body{
@@ -14,44 +16,33 @@
       background:var(--bg);
       color:var(--fg);
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size:14px;
+      cursor: crosshair;
+      -webkit-font-smoothing: antialiased;
     }
 
     main{
       max-width:680px;
-      margin:220px auto 160px;
+      margin:100px auto 200px;
       padding:0 30px;
-    }
-
-    a{
-      color:var(--fg);
-      text-decoration:none;
-    }
-
-    h1{
-      font-size:clamp(12px,1.6vw,16px);
-      font-weight:400;
-      letter-spacing:0.02em;
-      margin:0;
-      margin-bottom:140px;
-      text-align:center;
-      color:var(--fg);
-      opacity:0.92;
-    }
-
-    h1 a{
-      color:inherit;
     }
 
     figure{
       margin:140px 0;
+      width: 100%;
     }
 
-    figure img{
+    img, video{
       width:100%;
       height:auto;
       display:block;
-      background:#111;
+      background:#0a0a0a;
+    }
+
+    /* AUDIO : Look sombre pour le lecteur */
+    audio {
+      width: 100%;
+      margin-top: 10px;
+      filter: invert(100%) hue-rotate(180deg) brightness(0.6);
     }
 
   </style>
@@ -59,10 +50,6 @@
 
 <body>
   <main>
-
-    <h1>
-      <a href="../../">All I Had To Do Was Wait</a>
-    </h1>
 
     <figure>
       <img src="../assets/images/wait-03.png" alt="">
@@ -76,12 +63,51 @@
       <img src="../assets/images/wait-02.png" alt="">
     </figure>
 
+    <figure>
+      <video playsinline loop muted autoplay>
+        <source src="../assets/videos/ton-video.mp4" type="video/mp4">
+      </video>
+    </figure>
+
+    <figure>
+      <audio controls>
+        <source src="../assets/sounds/ton-audio.mp3" type="audio/mpeg">
+      </audio>
+    </figure>
+
   </main>
 
   <script>
-    // double clic → ouvre la note
-    document.addEventListener("dblclick", () => {
-      window.location.href = "note.html";
+    // NAVIGATION IDENTIQUE AUX NOTES
+    let clickTimer = null;
+
+    document.addEventListener('click', (e) => {
+      // On ne déclenche pas le retour si on clique sur les réglages audio/vidéo
+      if (e.target.tagName === 'VIDEO' || e.target.tagName === 'AUDIO' || e.target.closest('audio')) return;
+
+      if (clickTimer === null) {
+        clickTimer = setTimeout(() => {
+          clickTimer = null;
+          window.history.back(); // 1 CLIC : Retour page précédente
+        }, 300);
+      } else {
+        clearTimeout(clickTimer);
+        clickTimer = null;
+        window.location.href = "../../index.html"; // 2 CLICS : Retour accueil
+      }
+    });
+
+    // DOUBLE TAP MOBILE POUR L'ACCUEIL
+    let lastTap = 0;
+    document.addEventListener('touchend', (e) => {
+      if (e.target.tagName === 'VIDEO' || e.target.tagName === 'AUDIO') return;
+      
+      const currentTime = new Date().getTime();
+      const tapLength = currentTime - lastTap;
+      if (tapLength < 300 && tapLength > 0) {
+        window.location.href = "../../index.html";
+      }
+      lastTap = currentTime;
     });
   </script>
 

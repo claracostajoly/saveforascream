@@ -1,47 +1,79 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>LUTHERIE OF NOTHINGNESS</title>
+    <title>lutherie of nothingness</title>
     <style>
-        body { background: #000; color: #444; font-family: 'Courier New', monospace; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; text-transform: uppercase; }
-        .header { font-size: 12px; letter-spacing: 4px; color: #888; margin-bottom: 40px; text-align: center; }
-        .manifesto { max-width: 500px; font-size: 10px; line-height: 1.8; color: #333; margin-bottom: 40px; text-align: justify; border-left: 1px solid #222; padding-left: 20px; }
-        canvas { border-top: 1px solid #111; border-bottom: 1px solid #111; width: 100%; height: 60px; margin-bottom: 40px; }
-        button { background: none; border: 1px solid #333; color: #555; padding: 20px 40px; cursor: pointer; font-family: monospace; font-size: 10px; letter-spacing: 3px; transition: 0.3s; }
-        button:hover { border-color: #666; color: #999; }
-        .status-line { font-size: 9px; margin-top: 10px; color: #222; }
+        body { 
+            background: #000; 
+            color: #333; 
+            font-family: 'Courier New', monospace; 
+            font-size: 10px; 
+            padding: 60px; 
+            margin: 0; 
+            text-transform: lowercase; 
+            line-height: 1.6;
+        }
+
+        canvas { 
+            width: 400px; 
+            height: 60px; 
+            margin-bottom: 40px; 
+            display: block; 
+            opacity: 0.3; 
+            border-top: 1px solid #111; 
+            border-bottom: 1px solid #111; 
+        }
+
+        #btn { 
+            cursor: pointer; 
+            color: #555; 
+            display: inline-block; 
+            margin-bottom: 60px;
+            text-decoration: underline;
+        }
+
+        #btn:hover { color: #888; }
+
+        .log { margin-bottom: 2px; }
+        .data { color: #444; }
+        
+        .manifesto-tiny {
+            margin-top: 100px;
+            max-width: 350px;
+            color: #222;
+        }
     </style>
 </head>
 <body>
 
-    <div class="header">LUTHERIE OF NOTHINGNESS</div>
-
-    <div class="manifesto">
-        STATUS: [ IDLE / RESIDUAL ]<br>
-        SOURCE: COMPUTATIONAL NOISE (32-BIT FLOAT)<br>
-        BODY: DUAL VIRTUAL RESONATORS<br><br>
-        Le son n'est pas un instrument, mais une vibration endogène. 
-        À +30dB, le silence numérique devient une masse physique. 
-        C'est l'après (After) et le sans (Without).
-    </div>
-
     <canvas id="scope"></canvas>
 
-    <button id="btn">[ INITIALIZE ]</button>
-    <div id="status-text" class="status-line">SYSTEM_AWAITING_INPUT</div>
+    <div id="btn">push silence to the edge (initialize)</div>
+
+    <div class="log">milieu : digital void resonance</div>
+    <div class="log">source : 32-bit float random noise</div>
+    <div class="log">status : <span id="status-text" class="data">idle</span></div>
+    <div class="log">spectral emergence : <span id="freq-text" class="data">0.00</span> hz</div>
+
+    <div class="manifesto-tiny">
+        the instrument does not exist. the sound is an endogenous property of the computational milieu. you are observing the processor attempting to digest vacuum at high velocity.
+    </div>
 
     <script>
     let audioCtx, analyser, dataArray, canvas, canvasCtx;
     let isRunning = false;
+    const delayTimeValue = 0.003; // the "string" length
 
     document.getElementById('btn').onclick = function() {
         if (!audioCtx) setupAudio();
         if (!isRunning) {
             audioCtx.resume().then(() => {
                 startSystem();
-                this.innerText = "[ TERMINATE ]";
-                document.getElementById('status-text').innerText = "SYSTEM_RUNNING_RESIDUAL_FLOW";
+                this.innerText = "release tension (terminate)";
+                document.getElementById('status-text').innerText = "active_feedback";
+                // frequency = 1 / delayTime
+                document.getElementById('freq-text').innerText = (1 / delayTimeValue).toFixed(2);
                 isRunning = true;
                 draw();
             });
@@ -58,7 +90,7 @@
     }
 
     function startSystem() {
-        // 1. SOURCE (Bruit de base)
+        // 1. the nothingness (random noise)
         const bufferSize = audioCtx.sampleRate * 2;
         const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
         const data = buffer.getChannelData(0);
@@ -67,19 +99,20 @@
         noise.buffer = buffer; noise.loop = true;
 
         const noiseGain = audioCtx.createGain();
-        noiseGain.gain.value = 0.002;
+        noiseGain.gain.value = 0.002; // keeping it low to let resonance emerge
 
-        // 2. RÉSONATEURS (Ce qui crée la note/tenue)
-        const delay1 = audioCtx.createDelay(); delay1.delayTime.value = 0.003; 
-        const delay2 = audioCtx.createDelay(); delay2.delayTime.value = 0.0031;
-        const feedback = audioCtx.createGain(); feedback.gain.value = 0.94; 
+        // 2. the virtual string (karplus-strong basis)
+        const delay1 = audioCtx.createDelay(); 
+        delay1.delayTime.value = delayTimeValue; 
+        const feedback = audioCtx.createGain(); 
+        feedback.gain.value = 0.94; 
 
-        // 3. TEXTURE (Le filtre qui rend le son sombre et massif)
+        // 3. texture (darkening the void)
         const lpFilter = audioCtx.createBiquadFilter();
         lpFilter.type = "lowpass";
         lpFilter.frequency.value = 3500; 
 
-        // 4. DYNAMIQUE (Le compresseur qui écrase le silence)
+        // 4. dynamics (forcing the trace to the surface)
         const compressor = audioCtx.createDynamicsCompressor();
         compressor.threshold.setValueAtTime(-30, audioCtx.currentTime);
         compressor.ratio.setValueAtTime(12, audioCtx.currentTime);
@@ -88,16 +121,15 @@
         masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
         masterGain.gain.linearRampToValueAtTime(1.5, audioCtx.currentTime + 3);
 
-        // --- ROUTAGE ---
+        // routing
         noise.connect(noiseGain);
         noiseGain.connect(delay1);
-        delay1.connect(delay2);
-        delay2.connect(feedback);
-        feedback.connect(delay1); 
+        delay1.connect(feedback);
+        feedback.connect(delay1); // the infinite loop
         
-        delay2.connect(lpFilter);
+        delay1.connect(lpFilter);
         lpFilter.connect(compressor);
-        compressor.connect(analyser); // Pour l'oscilloscope
+        compressor.connect(analyser);
         analyser.connect(masterGain);
         masterGain.connect(audioCtx.destination);
 
@@ -110,7 +142,7 @@
         canvasCtx.fillStyle = '#000';
         canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
         canvasCtx.lineWidth = 1;
-        canvasCtx.strokeStyle = '#444'; 
+        canvasCtx.strokeStyle = '#222'; // subtle trace
         canvasCtx.beginPath();
         let sliceWidth = canvas.width * 1.0 / analyser.frequencyBinCount;
         let x = 0;

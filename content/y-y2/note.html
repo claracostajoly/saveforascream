@@ -3,17 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>note_spectre</title>
+  <title>y = y2_note</title>
   <style>
     :root {
       --bg: #000000;
-      --text-color: #bbb; 
+      --text-color: #bbb;
     }
 
     * {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       box-sizing: border-box;
-      font-weight: 400; 
+      font-weight: 400;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
@@ -22,7 +22,7 @@
       margin: 0;
       background: var(--bg);
       color: var(--text-color);
-      min-height: 180vh; 
+      min-height: 180vh;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -31,14 +31,16 @@
 
     main {
       width: 100%;
-      max-width: 600px; 
+      max-width: 600px;
       padding: 120px 25px;
     }
 
     h1 {
-      font-size: 14px;
-      /* Espace augmenté entre titre et premier texte */
-      margin-bottom: 150px; 
+      /* TAILLE DU TITRE AUGMENTÉE ICI */
+      /* font-size: 16px; ou clamp pour le responsive */
+      font-size: clamp(14px, 2vw, 18px); 
+      /* Espacement ajusté sous le titre pour compenser la taille */
+      margin-bottom: 130px; 
       text-align: center;
       text-transform: lowercase;
       color: var(--text-color);
@@ -52,8 +54,7 @@
     }
 
     .intro {
-      /* Espace réduit entre le premier et le second texte */
-      margin-bottom: 15vh; 
+      margin-bottom: 15vh;
     }
 
     .extra-content {
@@ -72,7 +73,7 @@
 <body>
 
   <main>
-    <h1>y = y2_note</h1>
+    <h1>after_without_note</h1>
 
     <div class="text-container">
       <div class="intro">

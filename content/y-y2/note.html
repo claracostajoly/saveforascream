@@ -7,17 +7,13 @@
   <style>
     :root {
       --bg: #000000;
-      /* Gris clair neutre, moins agressif que le blanc pur */
       --text-color: #bbb; 
     }
 
     * {
-      /* Pile de polices monospace pour assurer la finesse */
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       box-sizing: border-box;
-      /* Poids standard pour éviter l'effet "gras" */
       font-weight: 400; 
-      /* Pour affiner le rendu des polices blanches sur fond noir */
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
@@ -26,7 +22,7 @@
       margin: 0;
       background: var(--bg);
       color: var(--text-color);
-      min-height: 220vh; 
+      min-height: 180vh; 
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -41,7 +37,8 @@
 
     h1 {
       font-size: 14px;
-      margin-bottom: 80px;
+      /* Espace augmenté entre titre et premier texte */
+      margin-bottom: 150px; 
       text-align: center;
       text-transform: lowercase;
       color: var(--text-color);
@@ -49,19 +46,18 @@
 
     .text-container {
       width: 100%;
-      /* Bloc parfaitement aligné */
       text-align: justify;
       line-height: 1.7;
       font-size: 14px;
     }
 
     .intro {
-      margin-bottom: 60vh; 
+      /* Espace réduit entre le premier et le second texte */
+      margin-bottom: 15vh; 
     }
 
     .extra-content {
       opacity: 0;
-      /* Transition plus lente pour un effet d'apparition vaporeux */
       transition: opacity 1.5s ease;
     }
 
@@ -81,13 +77,13 @@
     <div class="text-container">
       <div class="intro">
         <p>
-          [TON TEXTE DE PRÉSENTATION ICI] - Duplexque isdem diebus acciderat malum, quod et Theophilum insontem atrox interceperat casus, et Serenianus dignus exsecratione cunctorum, innoxius, modo non reclamante publico vigore, discessit. Haec ubi latius fama vulgasset missaeque relationes adsiduae Gallum Caesarem permovissent.
+          Duplexque isdem diebus acciderat malum, quod et Theophilum insontem atrox interceperat casus, et Serenianus dignus exsecratione cunctorum, innoxius, modo non reclamante publico vigore, discessit. Haec ubi latius fama vulgasset missaeque relationes adsiduae Gallum Caesarem permovissent, quoniam magister equitum longius ea tempestate distinebatur.
         </p>
       </div>
 
       <div id="scroll-text" class="extra-content">
         <p>
-          [TON TEXTE DÉTAILLÉ ICI] - Post haec indumentum regale quaerebatur et ministris fucandae purpurae tortis confessisque pectoralem tuniculam sine manicis textam, Maras nomine quidam inductus est ut appellant Christiani diaconus, cuius prolatae litterae scriptae Graeco sermone ad Tyrii textrini praepositum celerari speciem perurgebant.
+          Post haec indumentum regale quaerebatur et ministris fucandae purpurae tortis confessisque pectoralem tuniculam sine manicis textam, Maras nomine quidam inductus est ut appellant Christiani diaconus, cuius prolatae litterae scriptae Graeco sermone ad Tyrii textrini praepositum celerari speciem perurgebant.
         </p>
       </div>
     </div>
@@ -97,7 +93,7 @@
     const extraContent = document.getElementById('scroll-text');
 
     window.addEventListener('scroll', () => {
-      const trigger = window.innerHeight * 0.75;
+      const trigger = window.innerHeight * 0.8;
       const contentTop = extraContent.getBoundingClientRect().top;
 
       if (contentTop < trigger) {

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>hold_note</title>
+
+  <style>
+    :root{
+      --bg:#ffffff;
+      --fg:#111111;
+      --muted:#666;
+    }
+
+    html,body{
+      margin:0;
+      background:var(--bg);
+      color:var(--fg);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size:14px;
+    }
+
+    main{
+      max-width:680px;
+      margin:220px auto 160px;
+      padding:0 30px;
+    }
+
+    a{
+      color:inherit;
+      text-decoration:none;
+    }
+
+    h1{
+      font-size:clamp(12px,1.6vw,16px);
+      font-weight:400;
+      letter-spacing:0.02em;
+      margin:0;
+      margin-bottom:140px;
+      text-align:center;
+      opacity:0.7;
+    }
+
+    p{
+      line-height:1.7;
+      opacity:0.75;
+      margin:0;
+      text-align:left;
+      color:var(--muted);
+    }
+
+  </style>
+</head>
+
+<body>
+  <main>
+
+    <!-- ✔️ retour ACCUEIL (chemin sûr) -->
+    <h1>
+      <a href="/saveforascream/">hold_note</a>
+    </h1>
+
+    <p>
+      hold operates as a minimal condition of persistence.  
+      the image is not enhanced but sustained.  
+      noise does not obscure — it enables.  
+      what appears is not content but a threshold of visibility.
+    </p>
+
+  </main>
+
+  <script>
+    // ✔️ double clic → retour à l’œuvre (index du dossier hold)
+    document.addEventListener("dblclick", () => {
+      window.location.href = "/saveforascream/content/hold/";
+    });
+  </script>
+
+</body>
+</html>

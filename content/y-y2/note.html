@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>note_spectre</title>
+  <style>
+    :root {
+      --bg: #000000;
+      --titre-color: #bbb; 
+      --texte-color: #888; 
+    }
+
+    * {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--texte-color);
+      min-height: 180vh; 
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: crosshair;
+    }
+
+    main {
+      width: 100%;
+      max-width: 600px; 
+      padding: 150px 25px; /* Ajusté car plus de nav en haut */
+    }
+
+    /* TITRE DE LA NOTE */
+    h1 {
+      font-size: 14px;
+      font-weight: 400;
+      margin-bottom: 150px; 
+      text-align: center;
+      text-transform: lowercase;
+      color: var(--titre-color);
+      cursor: pointer;
+      transition: color 0.3s ease;
+      user-select: none;
+    }
+    h1:hover { color: #fff; }
+
+    /* TEXTE EN BLOC */
+    .text-container {
+      width: 100%;
+      text-align: justify;
+      line-height: 1.7;
+      font-size: 13px;
+    }
+
+    p { 
+      margin: 0; 
+      font-weight: 300; 
+      letter-spacing: 0.02em;
+      color: var(--texte-color);
+      transition: color 0.4s ease;
+    }
+
+    p:hover { color: #fff; }
+
+    .intro { margin-bottom: 15vh; }
+
+    .extra-content {
+      opacity: 0;
+      transition: opacity 1.5s ease;
+    }
+    .extra-content.visible { opacity: 1; }
+
+  </style>
+</head>
+<body>
+
+  <main>
+    <h1 id="note-title">y = y2</h1>
+
+    <div class="text-container">
+      <div class="intro">
+        <p>Duplexque isdem diebus acciderat malum, quod et Theophilum insontem atrox interceperat casus, et Serenianus dignus exsecratione cunctorum, innoxius, modo non reclamante publico vigore, discessit.
+
+Haec ubi latius fama vulgasset missaeque relationes adsiduae Gallum Caesarem permovissent, quoniam magister equitum longius ea tempestate distinebatur, iussus comes orientis Nebridius contractis undique militaribus copiis ad eximendam periculo civitatem amplam et oportunam studio properabat ingenti, quo cognito abscessere latrones nulla re amplius memorabili gesta, dispersique ut solent avia montium petiere celsorum.
+
+Post haec indumentum regale quaerebatur et ministris fucandae purpurae tortis confessisque pectoralem tuniculam sine manicis textam, Maras nomine quidam inductus est ut appellant Christiani diaconus, cuius prolatae litterae scriptae Graeco sermone ad Tyrii textrini praepositum celerari speciem perurgebant quam autem non indicabant denique etiam idem ad usque discrimen vitae vexatus nihil fateri conpulsus est.</p>
+      </div>
+
+      <div id="scroll-text" class="extra-content">
+        <p>Duplexque isdem diebus acciderat malum, quod et Theophilum insontem atrox interceperat casus, et Serenianus dignus exsecratione cunctorum, innoxius, modo non reclamante publico vigore, discessit.
+
+Haec ubi latius fama vulgasset missaeque relationes adsiduae Gallum Caesarem permovissent, quoniam magister equitum longius ea tempestate distinebatur, iussus comes orientis Nebridius contractis undique militaribus copiis ad eximendam periculo civitatem amplam et oportunam studio properabat ingenti, quo cognito abscessere latrones nulla re amplius memorabili gesta, dispersique ut solent avia montium petiere celsorum.
+
+Post haec indumentum regale quaerebatur et ministris fucandae purpurae tortis confessisque pectoralem tuniculam sine manicis textam, Maras nomine quidam inductus est ut appellant Christiani diaconus, cuius prolatae litterae scriptae Graeco sermone ad Tyrii textrini praepositum celerari speciem perurgebant quam autem non indicabant denique etiam idem ad usque discrimen vitae vexatus nihil fateri conpulsus est.</p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const title = document.getElementById('note-title');
+    const extraContent = document.getElementById('scroll-text');
+    
+    // NAVIGATION SUR LE TITRE (Compatible Mobile)
+    let clickTimer = null;
+    title.addEventListener('click', () => {
+      if (clickTimer === null) {
+        clickTimer = setTimeout(() => {
+          clickTimer = null;
+          window.history.back(); // 1 clic : Précédent
+        }, 300);
+      } else {
+        clearTimeout(clickTimer);
+        clickTimer = null;
+        window.location.href = "../../index.html"; // 2 clics : Accueil
+      }
+    });
+
+    // DOUBLE-CLIC/TAP SUR LE FOND POUR QUITTER (Panic Button)
+    let lastTap = 0;
+    document.addEventListener('touchend', (e) => {
+      const currentTime = new Date().getTime();
+      const tapLength = currentTime - lastTap;
+      if (tapLength < 300 && tapLength > 0) {
+        window.location.href = "../../index.html";
+      }
+      lastTap = currentTime;
+    });
+
+    document.addEventListener('dblclick', (e) => {
+      if (e.target.tagName !== 'H1') { // Évite le conflit avec le titre
+        window.location.href = "../../index.html";
+      }
+    });
+
+    // APPARITION AU SCROLL
+    window.addEventListener('scroll', () => {
+      const trigger = window.innerHeight * 0.8;
+      if (extraContent.getBoundingClientRect().top < trigger) {
+        extraContent.classList.add('visible');
+      } else {
+        extraContent.classList.remove('visible');
+      }
+    });
+  </script>
+
+</body>
+</html>

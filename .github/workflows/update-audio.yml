@@ -1,35 +1,39 @@
-name: Update audio
+name: y = y2
 
 on:
   schedule:
-    - cron: "*/10 * * * *"  # toutes les 10 minutes
-  workflow_dispatch:
+    - cron: '*/5 * * * *' # S'exécute toutes les 5 minutes
+  workflow_dispatch:      # Permet de le lancer manuellement pour tester
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: '3.10'
 
       - name: Install dependencies
-        run: |
-          pip install numpy librosa soundfile
+        run: pip install numpy librosa soundfile
 
-      - name: Run script
-        run: python content/dead_prayer_machine/script.py
+      - name: Run Machine
+        run: python content/y-y2/script.py
 
       - name: Commit and push
         run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "actions@github.com"
-
-          git add content/dead_prayer_machine/outputs/latest.wav
-
-          git commit -m "update audio" || echo "no changes"
-
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add content/y-y2/outputs/latest.wav
+          git add content/y-y2/outputs/count.txt
+          git commit -m "y-y2: mutation" || exit 0
           git push

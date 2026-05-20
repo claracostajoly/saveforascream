@@ -1,119 +1,117 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <title>after / without</title>
-
-  <style>
-    :root{
-      --bg:#000;
-      --fg:#ccc;
-      --muted:#999;
-    }
-
-    html,body{
-      margin:0;
-      background:var(--bg);
-      color:var(--fg);
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size:14px;
-      animation: fadeInSpectral 1.6s ease-out both;
-    }
-
-    @keyframes fadeInSpectral {
-      from { opacity: 0; filter: blur(2px); }
-      to { opacity: 1; filter: blur(0); }
-    }
-
-    main{
-      max-width:680px;
-      margin:80px auto 120px;
-      padding:0 30px;
-    }
-
-    a{
-      color:var(--fg);
-      text-decoration:none;
-    }
-
-    h1{
-      font-size:clamp(20px,2.6vw,28px);
-      font-weight:500;
-      letter-spacing:.02em;
-      margin:1.2rem 0 .4rem;
-      text-align:center;
-    }
-
-    /* ✅ centrage optique parfait du titre */
-    h1 a{
-      display:inline-block;
-      text-align:center;
-    }
-
-    p{
-      line-height:1.65;
-      margin:0.9rem 0;
-      text-align:justify;
-      opacity:.82;
-      transition:opacity .6s ease, color .6s ease, text-shadow .6s ease;
-    }
-
-    p:hover{
-      opacity:1;
-      color:#ddd;
-      text-shadow:0 0 6px rgba(255,255,255,0.04);
-    }
-
-    .meta{
-      display:none !important;
-    }
-
-    /* pause forte avant le texte */
-    .spacer{
-      height:8rem;
-      display:block;
-    }
-
-    p[data-fade]{
-      opacity:var(--fade,1);
-      transition: opacity 2.5s ease, color 2.5s ease;
-    }
-
-    p[data-fade]:hover{
-      opacity:1 !important;
-      color:#eee;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>after / without</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #444;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            cursor: pointer; /* Indique qu'il faut cliquer */
+        }
+        #status {
+            font-size: 12px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            transition: opacity 1s;
+        }
+        .instruction {
+            color: #222;
+            margin-top: 20px;
+            font-size: 10px;
+        }
+    </style>
 </head>
-
 <body>
-  <main>
 
-    <h1>
-      <a href="../../">after / without</a>
-    </h1>
+    <div id="status">after / without</div>
+    <div class="instruction" id="hint">cliquer pour initier le vide</div>
 
-    <div class="spacer"></div>
+    <script>
+        let audioCtx;
 
-    <p>
-Ce dispositif sonore fonctionne sans source, sans instrument et sans événement. Aucun son n’est joué, déclenché ou interprété. Le système audio reste actif, mais privé de toute fonction musicale. Le setup rend audible l’état minimal d’activité d’un système audio numérique lorsque toute source est retirée. Il ne s’agit ni de silence, ni de bruit au sens classique, mais d’une persistance faible produite par le fonctionnement même du calcul audio. Une activité résiduelle, normalement imperceptible, est amplifiée, stabilisée et maintenue dans une zone d’écoute. Le son entendu ne renvoie à aucun référent, ne cite rien et ne transforme aucun matériau préalable. Il ne résulte pas d’un geste expressif, mais de la continuité opératoire de la machine. Ce qui est donné à entendre n’est pas un signal intentionnel, c’est le fait même que le système continue à fonctionner. Le dispositif met ainsi en forme une trace non mémorielle : une présence sonore produite dans le présent par la condition technique elle-même, après la désactivation de toute fonction expressive. Il propose une écoute du numérique en régime post-fonctionnel, où le son n’est plus produit mais maintenu. On écoute simplement une machine qui continue.
+        // On attend un clic pour démarrer l'AudioContext (sécurité navigateur)
+        document.body.addEventListener('click', () => {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                startTheVoid();
+                document.getElementById('hint').style.opacity = '0';
+                document.getElementById('status').style.color = '#888';
+            }
+        });
 
+        function startTheVoid() {
+            const now = audioCtx.currentTime;
 
-  </main>
+            // 1. SOURCE : EROSION NOISE
+            const bufferSize = audioCtx.sampleRate * 4;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            
+            for (let i = 0; i < bufferSize; i++) { 
+                data[i] = (Math.random() * 2 - 1) * 0.5; 
+            }
+            
+            const source = audioCtx.createBufferSource();
+            source.buffer = buffer; 
+            source.loop = true;
 
-  <script>
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        entry.target.style.setProperty('--fade', entry.intersectionRatio.toFixed(2));
-      });
-    },{
-      threshold: Array.from({length:21},(_,i)=>i/20)
-    });
+            const erosionFilter = audioCtx.createBiquadFilter();
+            erosionFilter.type = "lowpass";
+            erosionFilter.frequency.value = 350; 
 
-    document.querySelectorAll('p').forEach(el=>{
-      el.setAttribute('data-fade','');
-      observer.observe(el);
-    });
-  </script>
+            // 2. RÉSEAU DE RÉVERBÉRATION
+            const verbGains = [0.031, 0.057, 0.083, 0.113].map(t => {
+                const d = audioCtx.createDelay();
+                d.delayTime.value = t;
+                const f = audioCtx.createGain();
+                f.gain.value = 0.85; 
+                return {d, f};
+            });
+
+            // 3. COMPRESSEUR DE MASSE
+            const compressor = audioCtx.createDynamicsCompressor();
+            compressor.threshold.setValueAtTime(-40, now);
+            compressor.ratio.setValueAtTime(12, now);
+            compressor.attack.setValueAtTime(0.01, now);
+
+            // 4. PROTECTION FINALE
+            const limiter = audioCtx.createDynamicsCompressor();
+            limiter.threshold.setValueAtTime(-3.0, now);
+            limiter.ratio.setValueAtTime(20, now);
+
+            const makeupGain = audioCtx.createGain();
+            makeupGain.gain.setValueAtTime(0, now);
+            makeupGain.gain.linearRampToValueAtTime(0.8, now + 6); 
+
+            // --- ROUTAGE ---
+            source.connect(erosionFilter);
+            verbGains.forEach(node => {
+                erosionFilter.connect(node.d);
+                node.d.connect(node.f);
+                node.f.connect(node.d); 
+                node.d.connect(compressor);
+            });
+
+            compressor.connect(makeupGain);
+            makeupGain.connect(limiter);
+            limiter.connect(audioCtx.destination);
+
+            source.start();
+        }
+        // AJOUT : Double-clic pour aller à la note
+document.addEventListener("dblclick", () => {
+    window.location.href = "note.html"; 
+});
+    </script>
 </body>
 </html>

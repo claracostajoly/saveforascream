@@ -2,151 +2,61 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <title>All I Had to Do Was Wait</title>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>oeuvres</title>
   <style>
-    :root{
-      --bg:#000;
-      --fg:#ccc;
-      --muted:#999;
-    }
-
+    :root{ --bg:#000; --fg:#888; }
     html,body{
-      margin:0;
-      background:var(--bg);
-      color:var(--fg);
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size:14px;
-      animation: fadeInSpectral 1.6s ease-out both;
+      margin:0; background:var(--bg); color:var(--fg);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      cursor: crosshair; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
     }
-
-    @keyframes fadeInSpectral {
-      from { opacity: 0; filter: blur(2px); }
-      to { opacity: 1; filter: blur(0); }
-    }
-
-    main{
-      max-width:680px;
-      margin:80px auto 120px;
-      padding:0 30px;
-    }
-
-    a{
-      color:var(--fg);
-      text-decoration:none;
-    }
-
-    h1{
-      font-size:clamp(16px,2vw,22px);
-      font-weight:500;
-      letter-spacing:.02em;
-      margin:1.2rem 0 .4rem;
-      text-align:center;
-    }
-
-    p{
-      line-height:1.65;
-      margin:0.9rem 0;
-      text-align:justify;
-      opacity:.82;
-      transition:opacity .6s ease, color .6s ease, text-shadow .6s ease;
-    }
-
-    p:hover{
-      opacity:1;
-      color:#ddd;
-      text-shadow:0 0 6px rgba(255,255,255,0.04);
-    }
-
-    .meta{
-      margin-bottom:3rem;
-      opacity:.7;
-    }
-
-    figure{
-      position:relative;
-      margin:2.8rem 0;
-      overflow:hidden;
-    }
-
-    figure img{
-      width:100%;
-      height:auto;
-      display:block;
-      background:#111;
-      opacity:0;
-      transform:scale(1.01);
-      animation: fadeInSpectral 1.8s ease-out forwards;
-      transition: transform .35s ease, opacity .35s ease;
-    }
-
-    figure:hover img{
-      opacity:.96;
-      transform:scale(1.005);
-    }
-
-    figcaption{
-      display:none;
-    }
-
-    .spacer{
-      height:8rem;
-      display:block;
-    }
-
-    p[data-fade]{
-      opacity:var(--fade,1);
-      transition: opacity 2.5s ease, color 2.5s ease;
-    }
-
-    p[data-fade]:hover{
-      opacity:1 !important;
-      color:#eee;
-    }
+    main{ max-width:680px; margin:250px auto 200px; padding:0 30px; }
+    figure{ margin:140px 0; width: 100%; }
+    img, video{ width:100%; height:auto; display:block; background:#0a0a0a; }
+    audio { width: 100%; margin-top: 10px; filter: invert(100%) hue-rotate(180deg) brightness(0.6); }
   </style>
 </head>
-
 <body>
   <main>
-
-    <h1>
-      <a href="../../">All I Had to Do Was Wait</a>
-    </h1>
-
-    <div class="spacer"></div>
-
+    <figure><img src="../assets/images/wait-03.png" alt=""></figure>
+    <figure><img src="../assets/images/wait-04.png" alt=""></figure>
+    <figure><img src="../assets/images/wait-02.png" alt=""></figure>
     <figure>
-      <img src="../assets/images/wait-03.png" alt="Itération médiane du processus">
+      <video playsinline loop muted autoplay>
+        <source src="../assets/videos/ton-video.mp4" type="video/mp4">
+      </video>
     </figure>
-
-    <div class="spacer"></div>
-
     <figure>
-      <img src="../assets/images/wait-04.png" alt="Itération avancée du processus">
+      <audio controls><source src="../assets/sounds/ton-audio.mp3" type="audio/mpeg"></audio>
     </figure>
-
-    <div class="spacer"></div>
-
-    <figure>
-      <img src="../assets/images/wait-02.png" alt="Résidu final du processus">
-    </figure>
-
-    <div class="spacer"></div><div class="spacer"></div>
-
   </main>
 
   <script>
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        entry.target.style.setProperty('--fade', entry.intersectionRatio.toFixed(2));
-      });
-    },{
-      threshold: Array.from({length:21},(_,i)=>i/20)
+    let clickTimer = null;
+    document.addEventListener('click', (e) => {
+      if (e.target.tagName === 'VIDEO' || e.target.tagName === 'AUDIO' || e.target.closest('audio')) return;
+      if (clickTimer === null) {
+        clickTimer = setTimeout(() => {
+          clickTimer = null;
+          window.history.back(); // 1 CLIC : Retour Nébuleuse
+        }, 300);
+      } else {
+        clearTimeout(clickTimer);
+        clickTimer = null;
+        window.location.href = "note.html"; // 2 CLICS : Vers la NOTE
+      }
     });
 
-    document.querySelectorAll('p').forEach(el=>{
-      el.setAttribute('data-fade','');
-      observer.observe(el);
+    let lastTap = 0;
+    document.addEventListener('touchend', (e) => {
+      if (e.target.tagName === 'VIDEO' || e.target.tagName === 'AUDIO') return;
+      const currentTime = new Date().getTime();
+      const tapLength = currentTime - lastTap;
+      if (tapLength < 300 && tapLength > 0) {
+        window.location.href = "note.html"; // DOUBLE TAP MOBILE : Vers la NOTE
+      }
+      lastTap = currentTime;
     });
   </script>
 </body>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>lutherie of nothingness</title>
+    <style>
+        body { 
+            background: #000; 
+            color: #333; 
+            font-family: 'Courier New', monospace; 
+            font-size: 10px; 
+            padding: 60px; 
+            margin: 0; 
+            text-transform: lowercase; 
+            line-height: 1.6;
+        }
+        canvas { 
+            width: 400px; 
+            height: 60px; 
+            margin-bottom: 40px; 
+            display: block; 
+            opacity: 0.3; 
+            border-top: 1px solid #111; 
+            border-bottom: 1px solid #111; 
+        }
+        #btn { 
+            cursor: pointer; 
+            color: #555; 
+            display: inline-block; 
+            margin-bottom: 60px;
+            text-decoration: underline;
+        }
+        #btn:hover { color: #888; }
+        .log { margin-bottom: 2px; }
+        .data { color: #444; }
+        .manifesto-tiny { margin-top: 100px; max-width: 350px; color: #222; }
+    </style>
+</head>
+<body>
+
+    <canvas id="scope"></canvas>
+
+    <div id="btn">push silence to the edge (initialize)</div>
+
+    <div class="log">milieu : digital void resonance</div>
+    <div class="log">source : 32-bit float random noise</div>
+    <div class="log">status : <span id="status-text" class="data">idle</span></div>
+    <div class="log">spectral emergence : <span id="freq-text" class="data">0.00</span> hz</div>
+
+    <div class="manifesto-tiny">
+        the instrument does not exist. the sound is an endogenous property of the computational milieu. you are observing the processor attempting to digest vacuum at high velocity.
+    </div>
+
+    <script>
+    let audioCtx, analyser, dataArray, canvas, canvasCtx;
+    let isRunning = false;
+    
+    // original physical constants
+    const d1 = 0.003;
+    const d2 = 0.0031;
+
+    document.getElementById('btn').onclick = function() {
+        if (!audioCtx) setupAudio();
+        if (!isRunning) {
+            audioCtx.resume().then(() => {
+                startSystem();
+                this.innerText = "release tension (terminate)";
+                document.getElementById('status-text').innerText = "active_feedback";
+                document.getElementById('freq-text').innerText = (1 / d1).toFixed(2);
+                isRunning = true;
+                draw();
+            });
+        } else { location.reload(); }
+    };
+
+    function setupAudio() {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 2048;
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+        canvas = document.getElementById('scope');
+        canvasCtx = canvas.getContext('2d');
+    }
+
+    function startSystem() {
+        const bufferSize = audioCtx.sampleRate * 2;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
+        
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer; noise.loop = true;
+
+        const noiseGain = audioCtx.createGain();
+        noiseGain.gain.value = 0.002;
+
+        // back to original dual-resonator setup
+        const delay1 = audioCtx.createDelay(); delay1.delayTime.value = d1; 
+        const delay2 = audioCtx.createDelay(); delay2.delayTime.value = d2;
+        const feedback = audioCtx.createGain(); feedback.gain.value = 0.94; 
+
+        const lpFilter = audioCtx.createBiquadFilter();
+        lpFilter.type = "lowpass";
+        lpFilter.frequency.value = 3500; 
+
+        const compressor = audioCtx.createDynamicsCompressor();
+        compressor.threshold.setValueAtTime(-30, audioCtx.currentTime);
+        compressor.ratio.setValueAtTime(12, audioCtx.currentTime);
+
+        const masterGain = audioCtx.createGain();
+        masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        masterGain.gain.linearRampToValueAtTime(1.5, audioCtx.currentTime + 3);
+
+        // the original "wild" routing
+        noise.connect(noiseGain);
+        noiseGain.connect(delay1);
+        delay1.connect(delay2);
+        delay2.connect(feedback);
+        feedback.connect(delay1); // cross-feedback creates the electric texture
+        
+        delay2.connect(lpFilter);
+        lpFilter.connect(compressor);
+        compressor.connect(analyser);
+        analyser.connect(masterGain);
+        masterGain.connect(audioCtx.destination);
+
+        noise.start();
+    }
+
+    function draw() {
+        requestAnimationFrame(draw);
+        analyser.getByteTimeDomainData(dataArray);
+        canvasCtx.fillStyle = '#000';
+        canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+        canvasCtx.lineWidth = 1;
+        canvasCtx.strokeStyle = '#222';
+        canvasCtx.beginPath();
+        let sliceWidth = canvas.width * 1.0 / analyser.frequencyBinCount;
+        let x = 0;
+        for (let i = 0; i < analyser.frequencyBinCount; i++) {
+            let v = dataArray[i] / 128.0;
+            let y = v * canvas.height / 2;
+            if (i === 0) { canvasCtx.moveTo(x, y); } else { canvasCtx.lineTo(x, y); }
+            x += sliceWidth;
+        }
+        canvasCtx.stroke();
+    }
+    </script>
+</body>
+</html>

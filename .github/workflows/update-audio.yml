@@ -11,7 +11,8 @@ jobs:
     permissions:
       contents: write
 
-    steps:
+  # Le bloc d'actions reste identique, c'est la fin qui change
+  steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
@@ -30,7 +31,6 @@ jobs:
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        # On ajoute le son ET le compteur
         git add content/y-y2/outputs/latest.wav
         git add content/y-y2/outputs/count.txt
         git commit -m "y-y2: mutation" || exit 0

@@ -11,27 +11,26 @@ jobs:
     permissions:
       contents: write
 
-  # Le bloc d'actions reste identique, c'est la fin qui change
-  steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
 
-    - name: Install dependencies
-      run: pip install numpy librosa soundfile
+      - name: Install dependencies
+        run: pip install numpy librosa soundfile
 
-    - name: Run Machine
-      run: python content/y-y2/script.py
+      - name: Run Machine
+        run: python content/y-y2/script.py
 
-    - name: Commit and push
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add content/y-y2/outputs/latest.wav
-        git add content/y-y2/outputs/count.txt
-        git commit -m "y-y2: mutation" || exit 0
-        git push
+      - name: Commit and push
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add content/y-y2/outputs/latest.wav
+          git add content/y-y2/outputs/count.txt
+          git commit -m "y-y2: mutation" || exit 0
+          git push

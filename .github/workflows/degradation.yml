@@ -1,0 +1,29 @@
+name: Loop Degradation Chron
+
+on:
+  schedule:
+    - cron: '*/5 * * * *' # S'exécute toutes les 5 minutes
+  workflow_dispatch: # Permet de le lancer manuellement si besoin
+
+jobs:
+  update-residue:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-python-version: '3.10'
+
+    - name: Execute script
+      run: python content/y-y2/script.py
+
+    - name: Commit and Push changes
+      run: |
+        git config --global user.name "y=y2-bot"
+        git config --global user.email "bot@saveforascream.internal"
+        git add content/y-y2/outputs/count.txt
+        git commit -m "system: loop degradation update [skip ci]" || exit 0
+        git push

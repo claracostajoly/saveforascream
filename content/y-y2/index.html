@@ -83,7 +83,7 @@
                 
                 filterNode = audioCtx.createBiquadFilter();
                 filterNode.type = 'lowpass';
-                filterNode.frequency.setValueAtTime(1000, audioCtx.currentTime);
+                filterNode.frequency.setValueAtTime(800, audioCtx.currentTime); // Coupe haut pour garder uniquement la lourdeur sourde
 
                 gainNode = audioCtx.createGain();
                 gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
@@ -109,10 +109,12 @@
                     sourceNode.loop = true;
                     sourceNode.connect(filterNode);
 
+                    // Assure que le volume démarre à zéro absolu avant le début physique
                     gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
                     sourceNode.start(0);
                     
-                    gainNode.gain.linearRampToValueAtTime(0.7, audioCtx.currentTime + 0.08);
+                    // Rampe progressive de 200ms pour ouvrir le canal en douceur
+                    gainNode.gain.linearRampToValueAtTime(0.6, audioCtx.currentTime + 0.2);
 
                     state.innerText = "streaming_residue";
                     trigger.innerText = "> close_channel";
@@ -125,7 +127,7 @@
             } else {
                 if (gainNode) {
                     gainNode.gain.setValueAtTime(gainNode.gain.value, audioCtx.currentTime);
-                    gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.08);
+                    gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
                 }
                 setTimeout(() => {
                     if (sourceNode) sourceNode.stop();
@@ -133,7 +135,7 @@
                     trigger.innerText = "> open_channel";
                     state.style.color = "#444";
                     isPlaying = false;
-                }, 90);
+                }, 210);
             }
         }
 

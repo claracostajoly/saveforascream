@@ -32,10 +32,9 @@
     main {
       width: 100%;
       max-width: 600px; 
-      padding: 150px 25px; /* Ajusté car plus de nav en haut */
+      padding: 150px 25px;
     }
 
-    /* TITRE DE LA NOTE */
     h1 {
       font-size: 14px;
       font-weight: 400;
@@ -49,7 +48,6 @@
     }
     h1:hover { color: #fff; }
 
-    /* TEXTE EN BLOC */
     .text-container {
       width: 100%;
       text-align: justify;
@@ -63,6 +61,7 @@
       letter-spacing: 0.02em;
       color: var(--texte-color);
       transition: color 0.4s ease;
+      text-transform: lowercase;
     }
 
     p:hover { color: #fff; }
@@ -74,7 +73,6 @@
       transition: opacity 1.5s ease;
     }
     .extra-content.visible { opacity: 1; }
-
   </style>
 </head>
 <body>
@@ -84,19 +82,19 @@
 
     <div class="text-container">
       <div class="intro">
-        <p>Duplexque isdem diebus acciderat malum, quod et Theophilum insontem atrox interceperat casus, et Serenianus dignus exsecratione cunctorum, innoxius, modo non reclamante publico vigore, discessit.
-
-Haec ubi latius fama vulgasset missaeque relationes adsiduae Gallum Caesarem permovissent, quoniam magister equitum longius ea tempestate distinebatur, iussus comes orientis Nebridius contractis undique militaribus copiis ad eximendam periculo civitatem amplam et oportunam studio properabat ingenti, quo cognito abscessere latrones nulla re amplius memorabili gesta, dispersique ut solent avia montium petiere celsorum.
-
-Post haec indumentum regale quaerebatur et ministris fucandae purpurae tortis confessisque pectoralem tuniculam sine manicis textam, Maras nomine quidam inductus est ut appellant Christiani diaconus, cuius prolatae litterae scriptae Graeco sermone ad Tyrii textrini praepositum celerari speciem perurgebant quam autem non indicabant denique etiam idem ad usque discrimen vitae vexatus nihil fateri conpulsus est.</p>
+        <p>le réseau contemporain souffre d’une pathologie : l’hypermnésie. les infrastructures de stockage, les centres de données et les protocoles de versionnage comme git ont été conçus pour l’accumulation absolue. rien ne s’y efface spontanément ; chaque modification, chaque métadonnée et chaque résidu de code est indexé, dupliqué et conservé. dans cet écosystème panoptique, l’oubli est une anomalie technique.</p>
+        <br><br>
+        <p>y = y2 prend acte de cette mémoire totale pour la retourner contre elle-même. le dispositif utilise les outils de la conservation réseau non pas pour préserver un objet, mais pour orchestrer rigoureusement sa disparition.</p>
       </div>
 
       <div id="scroll-text" class="extra-content">
-        <p>Duplexque isdem diebus acciderat malum, quod et Theophilum insontem atrox interceperat casus, et Serenianus dignus exsecratione cunctorum, innoxius, modo non reclamante publico vigore, discessit.
-
-Haec ubi latius fama vulgasset missaeque relationes adsiduae Gallum Caesarem permovissent, quoniam magister equitum longius ea tempestate distinebatur, iussus comes orientis Nebridius contractis undique militaribus copiis ad eximendam periculo civitatem amplam et oportunam studio properabat ingenti, quo cognito abscessere latrones nulla re amplius memorabili gesta, dispersique ut solent avia montium petiere celsorum.
-
-Post haec indumentum regale quaerebatur et ministris fucandae purpurae tortis confessisque pectoralem tuniculam sine manicis textam, Maras nomine quidam inductus est ut appellant Christiani diaconus, cuius prolatae litterae scriptae Graeco sermone ad Tyrii textrini praepositum celerari speciem perurgebant quam autem non indicabant denique etiam idem ad usque discrimen vitae vexatus nihil fateri conpulsus est.</p>
+        <p>la machine n’opère pas par soustraction ou par effacement direct des fichiers. elle oublie par saturation.</p>
+        <br><br>
+        <p>lorsqu'un opérateur active la commande open_channel, le navigateur est contraint de générer en temps réel une matrice de nombres pseudo-aléatoires. acoustiquement, ce processus produit un bruit blanc pur — un signal où toutes les fréquences audibles sont représentées avec une énergie égale. le bruit blanc est l’analogue d'une mémoire saturée : une superposition infinie d'informations qui s'annulent mutuellement. c’est une amnésie par surcharge : quand tout est rendu présent en temps réel, plus rien ne fait sens.</p>
+        <br><br>
+        <p>c'est le paradoxe clinique du dispositif : le système documente infatigablement sa propre perte de signal. toutes les cinq minutes, le robot de maintenance exécute sa tâche aveugle et consigne scrupuleusement la progression du mutisme dans le grand livre des commits. l’infrastructure se souvient de l’heure exacte, de l'index de la modification et de la signature de la machine. mais ce que cette archive hypermnésique conserve avec tant de précision, c'est le protocole d'une asphyxie.</p>
+        <br><br>
+        <p>plus l'archive est précise, plus le son devient lourd, confiné et sourd. le compteur n'enregistre pas le passage du temps ; il mesure la sédimentation du vide. en déplaçant l’esthétique du bug vers une ontologie de la maintenance du néant, y = y2 rappelle que dans un monde condamné à tout retenir, l’oubli n’est plus un état de nature. c’est un travail infrastructurel, une dépense d'énergie, un processus cybernétique qui doit être activement calculé et entretenu pour réussir à faire taire le signal.</p>
       </div>
     </div>
   </main>
@@ -105,7 +103,6 @@ Post haec indumentum regale quaerebatur et ministris fucandae purpurae tortis co
     const title = document.getElementById('note-title');
     const extraContent = document.getElementById('scroll-text');
     
-    // NAVIGATION SUR LE TITRE (Compatible Mobile)
     let clickTimer = null;
     title.addEventListener('click', () => {
       if (clickTimer === null) {
@@ -116,28 +113,26 @@ Post haec indumentum regale quaerebatur et ministris fucandae purpurae tortis co
       } else {
         clearTimeout(clickTimer);
         clickTimer = null;
-        window.location.href = "../../index.html"; // 2 clics : Accueil
+        window.location.href = "../../index.html"; // 2 clics : Panic bouton accueil
       }
     });
 
-    // DOUBLE-CLIC/TAP SUR LE FOND POUR QUITTER (Panic Button)
     let lastTap = 0;
     document.addEventListener('touchend', (e) => {
       const currentTime = new Date().getTime();
       const tapLength = currentTime - lastTap;
       if (tapLength < 300 && tapLength > 0) {
-        window.location.href = "../../index.html";
+        window.location.href = "../../index.html"; // Double-tap fond : Accueil
       }
       lastTap = currentTime;
     });
 
     document.addEventListener('dblclick', (e) => {
-      if (e.target.tagName !== 'H1') { // Évite le conflit avec le titre
-        window.location.href = "../../index.html";
+      if (e.target.tagName !== 'H1') {
+        window.location.href = "../../index.html"; // Double-clic fond : Accueil
       }
     });
 
-    // APPARITION AU SCROLL
     window.addEventListener('scroll', () => {
       const trigger = window.innerHeight * 0.8;
       if (extraContent.getBoundingClientRect().top < trigger) {

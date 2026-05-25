@@ -58,6 +58,33 @@
         let isPlaying = false;
         let currentIteration = 0;
 
+        // NAVIGATION COMPATIBLE MULTI-CLIC & TOUCH (Exclut le bouton open_channel)
+        let clickTimer = null;
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'action-trigger') return;
+            if (clickTimer === null) {
+                clickTimer = setTimeout(() => {
+                    clickTimer = null;
+                    window.history.back(); // 1 CLIC : Retour arrière
+                }, 300);
+            } else {
+                clearTimeout(clickTimer);
+                clickTimer = null;
+                window.location.href = "note.html"; // 2 CLICS : Vers le texte
+            }
+        });
+
+        let lastTap = 0;
+        document.addEventListener('touchend', (e) => {
+            if (e.target.id === 'action-trigger') return;
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTap;
+            if (tapLength < 300 && tapLength > 0) {
+                window.location.href = "note.html"; // DOUBLE TAP MOBILE : Vers le texte
+            }
+            lastTap = currentTime;
+        });
+
         function updateCounter() {
             fetch('./outputs/count.txt?t=' + new Date().getTime())
                 .then(response => response.ok ? response.text() : "1")

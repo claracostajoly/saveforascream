@@ -82,8 +82,8 @@
         let filterNode = null;
         let sourceNode = null;
 
-        // Charger le compteur d'itérations
-        fetch('outputs/count.txt')
+        // Charger le compteur d'itérations depuis le sous-dossier outputs
+        fetch('./outputs/count.txt')
             .then(response => response.text())
             .then(data => { 
                 iterDisplay.innerText = data.trim(); 
@@ -96,17 +96,17 @@
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             sourceNode = audioCtx.createMediaElementSource(player);
             
-            // Texture : Filtre analogique sourd
+            // Texture : Filtre passe-bas pour assombrir et donner du corps au silence
             filterNode = audioCtx.createBiquadFilter();
             filterNode.type = 'lowpass';
-            filterNode.frequency.setValueAtTime(1200, audioCtx.currentTime);
-            filterNode.Q.setValueAtTime(1, audioCtx.currentTime);
+            filterNode.frequency.setValueAtTime(1000, audioCtx.currentTime);
+            filterNode.Q.setValueAtTime(1.5, audioCtx.currentTime);
 
-            // Anti-pop : Gestion du volume progressive
+            // Volume initial à 0 pour éviter le pop d'activation
             gainNode = audioCtx.createGain();
             gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
 
-            // Connexion des modules
+            // Chaînage
             sourceNode.connect(filterNode);
             filterNode.connect(gainNode);
             gainNode.connect(audioCtx.destination);
@@ -120,19 +120,22 @@
                 if (!audioCtx) initAudioGraph();
                 if (audioCtx.state === 'suspended') audioCtx.resume();
 
-                player.src = "outputs/latest.wav?v=" + new Date().getTime();
+                // Assignation de la source locale relative
+                player.src = "./outputs/latest.wav?v=" + new Date().getTime();
                 player.load(); 
 
                 player.oncanplaythrough = function() {
+                    // Verrouillage du gain à 0 juste avant la lecture
+                    gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+                    
                     player.play()
                         .then(() => {
                             state.innerText = "streaming_residue";
                             trigger.innerText = "> close_channel";
                             state.style.color = "#aaa";
 
-                            // Fondu d'ouverture anti-pop (0.05 seconde)
-                            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-                            gainNode.gain.linearRampToValueAtTime(0.8, audioCtx.currentTime + 0.05);
+                            // Fondu d'ouverture linéaire (0.08 seconde pour lisser l'attaque)
+                            gainNode.gain.linearRampToValueAtTime(0.8, audioCtx.currentTime + 0.08);
                         })
                         .catch(e => {
                             console.error(e);
@@ -142,20 +145,23 @@
                 };
 
             } else {
-                // Fondu de fermeture anti-pop
-                if (gainNode) {
-                    gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.05);
+                if (gainNode && audioCtx) {
+                    // Alignement de la valeur actuelle pour éviter la coupure franche
+                    gainNode.gain.setValueAtTime(gainNode.gain.value, audioCtx.currentTime);
+                    gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.08);
                 }
                 
+                // On attend la fin complète du fondu avant de couper le flux matériel
                 setTimeout(() => {
                     player.pause();
                     state.innerText = "idle";
                     trigger.innerText = "> open_channel";
                     state.style.color = "#444";
-                }, 50);
+                }, 80);
             }
         }
 
+        // Cycle de rafraîchissement (5 minutes)
         setTimeout(() => { location.reload(); }, 300000);
     </script>
 </body>

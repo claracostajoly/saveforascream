@@ -61,76 +61,102 @@
         let audioCtx = null;
         let gainNode = null;
         let filterNode = null;
-        let audioBuffer = null;
-        let sourceNode = null;
+        let noiseSource = null;
         let isPlaying = false;
+        let currentIteration = 0;
 
+        // Récupération propre du compteur
         function updateCounter() {
             fetch('./outputs/count.txt?t=' + new Date().getTime())
-                .then(response => response.ok ? response.text() : "0")
+                .then(response => response.ok ? response.text() : "1")
                 .then(data => { 
-                    iterDisplay.innerText = data.replace(/[^0-9]/g, '') || "0"; 
+                    const num = parseInt(data.replace(/[^0-9]/g, ''), 10);
+                    currentIteration = isNaN(num) ? 1 : num;
+                    iterDisplay.innerText = currentIteration;
+                    
+                    // Si le son joue déjà, on ajuste la texture en temps réel selon l'itération
+                    if (isPlaying && filterNode) {
+                        adjustTexture();
+                    }
                 })
-                .catch(() => iterDisplay.innerText = "0");
+                .catch(() => {
+                    iterDisplay.innerText = "1";
+                });
         }
 
         updateCounter();
         setInterval(updateCounter, 10000);
 
-        async function loadAudioFile() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                
-                filterNode = audioCtx.createBiquadFilter();
-                filterNode.type = 'lowpass';
-                filterNode.frequency.setValueAtTime(800, audioCtx.currentTime); // Coupe haut pour garder uniquement la lourdeur sourde
-
-                gainNode = audioCtx.createGain();
-                gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-
-                filterNode.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
+        // Génère un bloc de bruit blanc pur en mémoire (la matière brute)
+        function createNoiseBuffer() {
+            const bufferSize = 2 * audioCtx.sampleRate;
+            const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
             }
-
-            const response = await fetch("./outputs/latest.wav?v=" + new Date().getTime());
-            const arrayBuffer = await response.arrayBuffer();
-            audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+            return noiseBuffer;
         }
 
-        async function toggleAudio() {
+        function adjustTexture() {
+            // Plus l'itération augmente, plus le filtre descend (le son devient plus sourd, lourd et asphyxié)
+            const baseFreq = 900;
+            const targetFreq = Math.max(150, baseFreq - (currentIteration * 8));
+            filterNode.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.5);
+            
+            // Le volume de la texture s'épaissit légèrement avec le temps
+            const baseGain = 0.15;
+            const targetGain = Math.min(0.4, baseGain + (currentIteration * 0.005));
+            gainNode.gain.setTargetAtTime(targetGain, audioCtx.currentTime, 0.2);
+        }
+
+        function toggleAudio() {
             if (!isPlaying) {
                 state.innerText = "loading_residue...";
-                try {
-                    await loadAudioFile();
-                    if (audioCtx.state === 'suspended') await audioCtx.resume();
+                
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    filterNode = audioCtx.createBiquadFilter();
+                    filterNode.type = 'lowpass';
+                    filterNode.Q.setValueAtTime(2.0, audioCtx.currentTime); // Résonance clinique
 
-                    sourceNode = audioCtx.createBufferSource();
-                    sourceNode.buffer = audioBuffer;
-                    sourceNode.loop = true;
-                    sourceNode.connect(filterNode);
-
-                    // Assure que le volume démarre à zéro absolu avant le début physique
+                    gainNode = audioCtx.createGain();
                     gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-                    sourceNode.start(0);
-                    
-                    // Rampe progressive de 200ms pour ouvrir le canal en douceur
-                    gainNode.gain.linearRampToValueAtTime(0.6, audioCtx.currentTime + 0.2);
 
-                    state.innerText = "streaming_residue";
-                    trigger.innerText = "> close_channel";
-                    state.style.color = "#aaa";
-                    isPlaying = true;
-                } catch (e) {
-                    console.error(e);
-                    state.innerText = "error_corrupted_frame";
+                    filterNode.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
                 }
+
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+
+                // Création du flux de calcul
+                noiseSource = audioCtx.createBufferSource();
+                noiseSource.buffer = createNoiseBuffer();
+                noiseSource.loop = true;
+                noiseSource.connect(filterNode);
+
+                // Application des paramètres liés au compteur actuel
+                adjustTexture();
+                
+                // Attaque ultra lissée pour éliminer le pop matériel
+                gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+                noiseSource.start(0);
+                
+                const baseGain = 0.15;
+                const targetGain = Math.min(0.4, baseGain + (currentIteration * 0.005));
+                gainNode.gain.linearRampToValueAtTime(targetGain, audioCtx.currentTime + 0.3);
+
+                state.innerText = "streaming_residue";
+                trigger.innerText = "> close_channel";
+                state.style.color = "#aaa";
+                isPlaying = true;
             } else {
                 if (gainNode) {
                     gainNode.gain.setValueAtTime(gainNode.gain.value, audioCtx.currentTime);
                     gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
                 }
                 setTimeout(() => {
-                    if (sourceNode) sourceNode.stop();
+                    if (noiseSource) noiseSource.stop();
                     state.innerText = "idle";
                     trigger.innerText = "> open_channel";
                     state.style.color = "#444";

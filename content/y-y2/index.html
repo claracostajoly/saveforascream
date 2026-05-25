@@ -1,129 +1,83 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>y = y2</title>
-    <style>
-        body { 
-            background: #000; 
-            color: #444; 
-            font-family: 'Courier New', monospace; 
-            font-size: 11px; 
-            padding: 30px; 
-            margin: 0; 
-            text-transform: lowercase; 
-            line-height: 1.6;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            box-sizing: border-box;
-            overflow: hidden;
-            cursor: crosshair;
-        }
+<script>
+    const player = document.getElementById('player');
+    const state = document.getElementById('state');
+    const trigger = document.getElementById('action-trigger');
+    const iterDisplay = document.getElementById('iterations');
+    
+    let audioCtx = null;
+    let gainNode = null;
+    let filterNode = null;
+    let sourceNode = null;
 
-        .status-container {
-            padding-left: 0;
-        }
+    // Charger le compteur
+    fetch('outputs/count.txt')
+        .then(response => response.text())
+        .then(data => { iterDisplay.innerText = data.trim(); })
+        .catch(() => iterDisplay.innerText = "1");
 
-        .data { color: #666; }
-
-        audio { display: none; }
-
-        #action-trigger {
-            cursor: pointer;
-            color: #555;
-            text-decoration: none;
-            margin-top: 20px;
-            display: inline-block;
-            transition: color 0.3s;
-        }
-
-        #action-trigger:hover { color: #fff; }
-
-        .manifesto {
-            max-width: 400px;
-            color: #222;
-            font-size: 10px;
-        }
-
-        @media (max-width: 768px) {
-            body { padding: 20px; }
-        }
-    </style>
-</head>
-<body ondblclick="window.location.href='note.html'">
-
-    <div class="status-container">
-        <div class="log">y = y2</div>
-        <div class="log">iteration : <span id="iterations" class="data">...</span></div>
-        <div class="log">status : <span id="state" class="data">awaiting_link</span></div>
+    function initAudioGraph() {
+        // Crée le moteur audio global
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
-        <div id="action-trigger" onclick="toggleAudio()">> open_channel</div>
-    </div>
+        // Relie le player HTML au moteur audio
+        sourceNode = audioCtx.createMediaElementSource(player);
+        
+        // Crée un filtre pour donner de la texture (chaleur analogique)
+        filterNode = audioCtx.createBiquadFilter();
+        filterNode.type = 'lowpass';
+        filterNode.frequency.setValueAtTime(1200, audioCtx.currentTime); // Coupe les aigus agressifs
+        filterNode.Q.setValueAtTime(1, audioCtx.currentTime);            // Donne de la résonance au vide
 
-    <audio id="player" loop>
-        <source id="audio-source" src="outputs/latest.wav" type="audio/wav">
-    </audio>
+        // Crée le gestionnaire de volume (pour éviter le pop)
+        gainNode = audioCtx.createGain();
+        gainNode.gain.setValueAtTime(0, audioCtx.currentTime); // Commence à zéro absolu
 
-    <div class="manifesto">
-        y = y2 // every 5 minutes, the system reloads its own residue. 
-        the sound is the cumulative error of re-processed silences. 
-        it is the computational decay of a void.
-    </div>
+        // Connexion du circuit : Player -> Filtre -> Volume -> Haut-parleurs
+        sourceNode.connect(filterNode);
+        filterNode.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+    }
 
-    <script>
-        const player = document.getElementById('player');
-        const state = document.getElementById('state');
-        const trigger = document.getElementById('action-trigger');
-        const iterDisplay = document.getElementById('iterations');
+    function toggleAudio() {
+        if (player.paused) {
+            state.innerText = "loading_residue...";
+            
+            if (!audioCtx) initAudioGraph();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
 
-        // Charger le nombre d'itérations depuis le fichier texte
-        fetch('outputs/count.txt')
-            .then(response => response.text())
-            .then(data => {
-                iterDisplay.innerText = data.trim();
-            })
-            .catch(() => iterDisplay.innerText = "1");
+            player.src = "outputs/latest.wav?v=" + new Date().getTime();
+            player.load(); 
 
-        function toggleAudio() {
-            if (player.paused) {
-                state.innerText = "loading_residue...";
-                state.style.color = "#666";
+            player.oncanplaythrough = function() {
+                player.play()
+                    .then(() => {
+                        state.innerText = "streaming_residue";
+                        trigger.innerText = "> close_channel";
+                        state.style.color = "#aaa";
 
-                // 1. Applique la nouvelle source avec le timestamp anti-cache
-                player.src = "outputs/latest.wav?v=" + new Date().getTime();
-                
-                // 2. Force le rechargement du player avec le nouveau fichier
-                player.load(); 
+                        // ANTI-POP & TEXTURE EVO : 
+                        // On monte le volume progressivement sur 0.05 seconde (FADE IN)
+                        gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+                        gainNode.gain.linearRampToValueAtTime(0.8, audioCtx.currentTime + 0.05);
+                    })
+                    .catch(e => {
+                        state.innerText = "error_blocked";
+                    });
+                player.oncanplaythrough = null;
+            };
 
-                // 3. Attend que le fichier soit chargé avant d'ordonner la lecture
-                player.oncanplaythrough = function() {
-                    player.play()
-                        .then(() => {
-                            state.innerText = "streaming_residue";
-                            trigger.innerText = "> close_channel";
-                            state.style.color = "#aaa";
-                        })
-                        .catch(e => {
-                            console.error("Erreur de lecture : ", e);
-                            state.innerText = "error_blocked";
-                        });
-                    // Nettoyage de l'événement
-                    player.oncanplaythrough = null;
-                };
-
-            } else {
+        } else {
+            // FADE OUT : On baisse le son doucement avant de couper pour éviter le pop de fermeture
+            gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.05);
+            
+            setTimeout(() => {
                 player.pause();
                 state.innerText = "idle";
                 trigger.innerText = "> open_channel";
                 state.style.color = "#444";
-            }
+            }, 50); // Attend la fin du fondu avant de faire pause
         }
+    }
 
-        // Recharge la page toutes les 5 minutes
-        setTimeout(() => { location.reload(); }, 300000);
-    </script>
-</body>
-</html>
+    setTimeout(() => { location.reload(); }, 300000);
+</script>

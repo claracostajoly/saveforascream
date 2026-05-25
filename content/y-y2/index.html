@@ -17,7 +17,7 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            justify-content: flex-start;
             box-sizing: border-box;
             overflow: hidden;
             cursor: crosshair;
@@ -33,7 +33,6 @@
             transition: color 0.3s;
         }
         #action-trigger:hover { color: #fff; }
-        .manifesto { max-width: 400px; color: #222; font-size: 10px; }
         @media (max-width: 768px) { body { padding: 20px; } }
     </style>
 </head>
@@ -42,15 +41,9 @@
     <div class="status-container">
         <div class="log">y = y2</div>
         <div class="log">iteration : <span id="iterations" class="data">0</span></div>
-        <div class="log">status : <span id="state" class="data">awaiting_link</span></div>
+        <div class="log">status : <span id="state" class="data">idle</span></div>
         
         <div id="action-trigger" onclick="toggleAudio()">> open_channel</div>
-    </div>
-
-    <div class="manifesto">
-        y = y2 // every 5 minutes, the system reloads its own residue. 
-        the sound is the cumulative error of re-processed silences. 
-        it is the computational decay of a void.
     </div>
 
     <script>
@@ -65,7 +58,6 @@
         let isPlaying = false;
         let currentIteration = 0;
 
-        // Récupération propre du compteur
         function updateCounter() {
             fetch('./outputs/count.txt?t=' + new Date().getTime())
                 .then(response => response.ok ? response.text() : "1")
@@ -74,7 +66,6 @@
                     currentIteration = isNaN(num) ? 1 : num;
                     iterDisplay.innerText = currentIteration;
                     
-                    // Si le son joue déjà, on ajuste la texture en temps réel selon l'itération
                     if (isPlaying && filterNode) {
                         adjustTexture();
                     }
@@ -87,7 +78,6 @@
         updateCounter();
         setInterval(updateCounter, 10000);
 
-        // Génère un bloc de bruit blanc pur en mémoire (la matière brute)
         function createNoiseBuffer() {
             const bufferSize = 2 * audioCtx.sampleRate;
             const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
@@ -99,12 +89,10 @@
         }
 
         function adjustTexture() {
-            // Plus l'itération augmente, plus le filtre descend (le son devient plus sourd, lourd et asphyxié)
             const baseFreq = 900;
             const targetFreq = Math.max(150, baseFreq - (currentIteration * 8));
             filterNode.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.5);
             
-            // Le volume de la texture s'épaissit légèrement avec le temps
             const baseGain = 0.15;
             const targetGain = Math.min(0.4, baseGain + (currentIteration * 0.005));
             gainNode.gain.setTargetAtTime(targetGain, audioCtx.currentTime, 0.2);
@@ -118,7 +106,7 @@
                     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                     filterNode = audioCtx.createBiquadFilter();
                     filterNode.type = 'lowpass';
-                    filterNode.Q.setValueAtTime(2.0, audioCtx.currentTime); // Résonance clinique
+                    filterNode.Q.setValueAtTime(2.0, audioCtx.currentTime);
 
                     gainNode = audioCtx.createGain();
                     gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
@@ -129,16 +117,13 @@
 
                 if (audioCtx.state === 'suspended') audioCtx.resume();
 
-                // Création du flux de calcul
                 noiseSource = audioCtx.createBufferSource();
                 noiseSource.buffer = createNoiseBuffer();
                 noiseSource.loop = true;
                 noiseSource.connect(filterNode);
 
-                // Application des paramètres liés au compteur actuel
                 adjustTexture();
                 
-                // Attaque ultra lissée pour éliminer le pop matériel
                 gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
                 noiseSource.start(0);
                 

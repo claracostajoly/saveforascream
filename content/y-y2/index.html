@@ -22,15 +22,9 @@
             overflow: hidden;
             cursor: crosshair;
         }
-
-        .status-container {
-            padding-left: 0;
-        }
-
+        .status-container { padding-left: 0; }
         .data { color: #666; }
-
         audio { display: none; }
-
         #action-trigger {
             cursor: pointer;
             color: #555;
@@ -39,31 +33,22 @@
             display: inline-block;
             transition: color 0.3s;
         }
-
         #action-trigger:hover { color: #fff; }
-
-        .manifesto {
-            max-width: 400px;
-            color: #222;
-            font-size: 10px;
-        }
-
-        @media (max-width: 768px) {
-            body { padding: 20px; }
-        }
+        .manifesto { max-width: 400px; color: #222; font-size: 10px; }
+        @media (max-width: 768px) { body { padding: 20px; } }
     </style>
 </head>
-<body ondblclick="window.location.href='note.html'">
+<body>
 
     <div class="status-container">
         <div class="log">y = y2</div>
-        <div class="log">iteration : <span id="iterations" class="data">...</span></div>
+        <div class="log">iteration : <span id="iterations" class="data">0</span></div>
         <div class="log">status : <span id="state" class="data">awaiting_link</span></div>
         
         <div id="action-trigger" onclick="toggleAudio()">> open_channel</div>
     </div>
 
-    <audio id="player" loop></audio>
+    <audio id="player" loop crossorigin="anonymous"></audio>
 
     <div class="manifesto">
         y = y2 // every 5 minutes, the system reloads its own residue. 
@@ -79,53 +64,51 @@
         
         let audioCtx = null;
         let gainNode = null;
-        let filterNode = null;
         let sourceNode = null;
 
-        // Charger le compteur d'itérations depuis le sous-dossier outputs
-        fetch('./outputs/count.txt')
-            .then(response => response.text())
-            .then(data => { 
-                iterDisplay.innerText = data.trim(); 
-            })
-            .catch(() => {
-                iterDisplay.innerText = "1";
-            });
+        // Force la lecture propre du compteur en évitant le cache de GitHub
+        function updateCounter() {
+            fetch('./outputs/count.txt?t=' + new Date().getTime())
+                .then(response => {
+                    if (!response.ok) throw new Error();
+                    return response.text();
+                })
+                .then(data => { 
+                    const num = data.replace(/[^0-9]/g, ''); // Nettoie les caractères invisibles
+                    iterDisplay.innerText = num ? num : "0"; 
+                })
+                .catch(() => {
+                    iterDisplay.innerText = "0";
+                });
+        }
+
+        updateCounter();
 
         function initAudioGraph() {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             sourceNode = audioCtx.createMediaElementSource(player);
-            
-            // Texture : Filtre passe-bas pour assombrir et donner du corps au silence
-            filterNode = audioCtx.createBiquadFilter();
-            filterNode.type = 'lowpass';
-            filterNode.frequency.setValueAtTime(1000, audioCtx.currentTime);
-            filterNode.Q.setValueAtTime(1.5, audioCtx.currentTime);
-
-            // Volume initial à 0 pour éviter le pop d'activation
             gainNode = audioCtx.createGain();
+            
+            // On initialise le volume à 0 sourd
             gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-
-            // Chaînage
-            sourceNode.connect(filterNode);
-            filterNode.connect(gainNode);
+            
+            sourceNode.connect(gainNode);
             gainNode.connect(audioCtx.destination);
         }
 
         function toggleAudio() {
             if (player.paused) {
                 state.innerText = "loading_residue...";
-                state.style.color = "#666";
                 
                 if (!audioCtx) initAudioGraph();
                 if (audioCtx.state === 'suspended') audioCtx.resume();
 
-                // Assignation de la source locale relative
+                // L'astuce anti-cache ultime pour briser le pop de buffer de GitHub Pages
                 player.src = "./outputs/latest.wav?v=" + new Date().getTime();
                 player.load(); 
 
                 player.oncanplaythrough = function() {
-                    // Verrouillage du gain à 0 juste avant la lecture
+                    // Fixation stricte du gain à 0 avant la lecture physique
                     gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
                     
                     player.play()
@@ -134,11 +117,10 @@
                             trigger.innerText = "> close_channel";
                             state.style.color = "#aaa";
 
-                            // Fondu d'ouverture linéaire (0.08 seconde pour lisser l'attaque)
-                            gainNode.gain.linearRampToValueAtTime(0.8, audioCtx.currentTime + 0.08);
+                            // Fondu d'ouverture très progressif (150ms) pour absorber le choc initial
+                            gainNode.gain.linearRampToValueAtTime(0.7, audioCtx.currentTime + 0.15);
                         })
                         .catch(e => {
-                            console.error(e);
                             state.innerText = "error_blocked";
                         });
                     player.oncanplaythrough = null;
@@ -146,22 +128,23 @@
 
             } else {
                 if (gainNode && audioCtx) {
-                    // Alignement de la valeur actuelle pour éviter la coupure franche
                     gainNode.gain.setValueAtTime(gainNode.gain.value, audioCtx.currentTime);
-                    gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.08);
+                    gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
                 }
                 
-                // On attend la fin complète du fondu avant de couper le flux matériel
                 setTimeout(() => {
                     player.pause();
                     state.innerText = "idle";
                     trigger.innerText = "> open_channel";
                     state.style.color = "#444";
-                }, 80);
+                }, 100);
             }
         }
 
-        // Cycle de rafraîchissement (5 minutes)
+        // Vérification du compteur toutes les 10 secondes sans recharger la page brutalement
+        setInterval(updateCounter, 10000);
+        
+        // Recharge globale toutes les 5 minutes
         setTimeout(() => { location.reload(); }, 300000);
     </script>
 </body>

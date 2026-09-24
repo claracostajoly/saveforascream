@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,14 +16,25 @@
             height: 100vh;
             margin: 0;
             overflow: hidden;
-            cursor: pointer; /* Indique qu'il faut cliquer */
+            cursor: pointer;
         }
         #status {
             font-size: 12px;
             letter-spacing: 4px;
             text-transform: uppercase;
-            transition: opacity 1s;
+            transition: color 1s;
         }
+        /* CORRECTIF 08 : l'affichage d'états que la thèse décrit et qui n'existait pas.
+           Seule ligne conservée : c'est la seule qui change. Le reste (source,
+           réseau, gain de rétroaction) appartient au texte, pas à l'écran. */
+        #readout {
+            margin-top: 28px;
+            font-size: 10px;
+            color: #222;
+            line-height: 1.7;
+            text-transform: lowercase;
+        }
+        #readout .data { color: #333; }
         .instruction {
             color: #222;
             margin-top: 20px;
@@ -34,18 +45,31 @@
 <body>
 
     <div id="status">after / without</div>
-    <div class="instruction" id="hint">cliquer pour initier le vide</div>
+
+    <div id="readout">
+        <div>status : <span id="state" class="data">idle</span></div>
+    </div>
+
+    <!-- CORRECTIF 08 : « click to initialize » — la formulation que cite la thèse.
+         « le vide » appartient au lexique de lutherie of nothingness. -->
+    <div class="instruction" id="hint">click to initialize</div>
 
     <script>
         let audioCtx;
+        const state = document.getElementById('state');
 
-        // On attend un clic pour démarrer l'AudioContext (sécurité navigateur)
         document.body.addEventListener('click', () => {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                state.innerText = 'loading_';
                 startTheVoid();
                 document.getElementById('hint').style.opacity = '0';
                 document.getElementById('status').style.color = '#888';
+
+                // CORRECTIF 08 : les états rendent lisible la montée de six secondes,
+                // qui n'était jusqu'ici qu'un fondu silencieux et illisible.
+                setTimeout(() => state.innerText = 'streaming_',       250);
+                setTimeout(() => state.innerText = 'active_feedback', 6000);
             }
         });
 
@@ -53,28 +77,31 @@
             const now = audioCtx.currentTime;
 
             // 1. SOURCE : EROSION NOISE
-            const bufferSize = audioCtx.sampleRate * 4;
+            // CORRECTIF 10 : 60 s au lieu de 4 s. Les résonateurs s'éteignent en
+            // 1,3 à 4,8 s : à 4 s la répétition du buffer était audible, pour une
+            // pièce dont l'argument est qu'elle n'entre jamais en boucle stricte.
+            const bufferSize = audioCtx.sampleRate * 60;
             const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
             const data = buffer.getChannelData(0);
-            
-            for (let i = 0; i < bufferSize; i++) { 
-                data[i] = (Math.random() * 2 - 1) * 0.5; 
+
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = (Math.random() * 2 - 1) * 0.5;
             }
-            
+
             const source = audioCtx.createBufferSource();
-            source.buffer = buffer; 
+            source.buffer = buffer;
             source.loop = true;
 
             const erosionFilter = audioCtx.createBiquadFilter();
             erosionFilter.type = "lowpass";
-            erosionFilter.frequency.value = 350; 
+            erosionFilter.frequency.value = 350;
 
             // 2. RÉSEAU DE RÉVERBÉRATION
             const verbGains = [0.031, 0.057, 0.083, 0.113].map(t => {
                 const d = audioCtx.createDelay();
                 d.delayTime.value = t;
                 const f = audioCtx.createGain();
-                f.gain.value = 0.85; 
+                f.gain.value = 0.85;
                 return {d, f};
             });
 
@@ -91,14 +118,14 @@
 
             const makeupGain = audioCtx.createGain();
             makeupGain.gain.setValueAtTime(0, now);
-            makeupGain.gain.linearRampToValueAtTime(0.8, now + 6); 
+            makeupGain.gain.linearRampToValueAtTime(0.8, now + 6);
 
             // --- ROUTAGE ---
             source.connect(erosionFilter);
             verbGains.forEach(node => {
                 erosionFilter.connect(node.d);
                 node.d.connect(node.f);
-                node.f.connect(node.d); 
+                node.f.connect(node.d);
                 node.d.connect(compressor);
             });
 
@@ -107,11 +134,34 @@
             limiter.connect(audioCtx.destination);
 
             source.start();
+
+            // ───────────────────────────────────────────────────────────────
+            // POINT 11 — OPTION B, DÉSACTIVÉE PAR DÉFAUT.
+            //
+            // En l'état, la pièce est un filtre linéaire invariant : après la
+            // montée de six secondes, plus rien n'évolue. Décommenter ce bloc
+            // fait dériver lentement le gain de rétroaction, et « une stabilité
+            // précaire, renégociée sans arrêt » devient littéralement vrai.
+            //
+            // C'est une décision artistique, pas une correction de bug : la
+            // pièce ne sonne plus tout à fait pareil. Si tu l'actives, c'est la
+            // phrase d'origine de la thèse qu'il faut garder, et non la
+            // correction en vert du paragraphe sur la précarité.
+            //
+            // const fbNodes = verbGains.map(n => n.f);
+            // (function drift() {
+            //     const target = 0.90 + Math.random() * 0.085;  // 0,900 – 0,985 : jamais >= 1
+            //     const dur    = 20 + Math.random() * 40;       // 20 – 60 s par palier
+            //     fbNodes.forEach(f =>
+            //         f.gain.setTargetAtTime(target, audioCtx.currentTime, dur / 3));
+            //     setTimeout(drift, dur * 1000);
+            // })();
+            // ───────────────────────────────────────────────────────────────
         }
-        // AJOUT : Double-clic pour aller à la note
-document.addEventListener("dblclick", () => {
-    window.location.href = "note.html"; 
-});
+
+        document.addEventListener("dblclick", () => {
+            window.location.href = "note.html";
+        });
     </script>
 </body>
 </html>

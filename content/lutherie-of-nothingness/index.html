@@ -4,29 +4,29 @@
     <meta charset="UTF-8">
     <title>lutherie of nothingness</title>
     <style>
-        body { 
-            background: #000; 
-            color: #333; 
-            font-family: 'Courier New', monospace; 
-            font-size: 10px; 
-            padding: 60px; 
-            margin: 0; 
-            text-transform: lowercase; 
+        body {
+            background: #000;
+            color: #333;
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            padding: 60px;
+            margin: 0;
+            text-transform: lowercase;
             line-height: 1.6;
         }
-        canvas { 
-            width: 400px; 
-            height: 60px; 
-            margin-bottom: 40px; 
-            display: block; 
-            opacity: 0.3; 
-            border-top: 1px solid #111; 
-            border-bottom: 1px solid #111; 
+        canvas {
+            width: 400px;
+            height: 60px;
+            margin-bottom: 40px;
+            display: block;
+            opacity: 0.3;
+            border-top: 1px solid #111;
+            border-bottom: 1px solid #111;
         }
-        #btn { 
-            cursor: pointer; 
-            color: #555; 
-            display: inline-block; 
+        #btn {
+            cursor: pointer;
+            color: #555;
+            display: inline-block;
             margin-bottom: 60px;
             text-decoration: underline;
         }
@@ -38,14 +38,19 @@
 </head>
 <body>
 
-    <canvas id="scope"></canvas>
+    <!-- CORRECTIF 07 : le tampon de dessin fait désormais 800x120 au lieu des
+         300x150 par défaut étirés en 400x60 par le CSS. -->
+    <canvas id="scope" width="800" height="120"></canvas>
 
     <div id="btn">push silence to the edge (initialize)</div>
 
-    <div class="log">milieu : digital void resonance</div>
-    <div class="log">source : 32-bit float random noise</div>
+    <!-- CORRECTIF 05 : plus de "digital void resonance" ni de "spectral emergence".
+         Chaque ligne est soit un paramètre réel du graphe, soit une mesure. -->
+    <div class="log">milieu : audiocontext</div>
+    <div class="log">excitation : noise, gain 0.002</div>
+    <div class="log">feedback : 0.94 / 1.00</div>
+    <div class="log">resonance : <span id="freq-text" class="data">—</span> hz</div>
     <div class="log">status : <span id="status-text" class="data">idle</span></div>
-    <div class="log">spectral emergence : <span id="freq-text" class="data">0.00</span> hz</div>
 
     <div class="manifesto-tiny">
         the instrument does not exist. the sound is an endogenous property of the computational milieu. you are observing the processor attempting to digest vacuum at high velocity.
@@ -54,30 +59,52 @@
     <script>
     let audioCtx, analyser, dataArray, canvas, canvasCtx;
     let isRunning = false;
-    
+    let frame = 0;
+
+    // CORRECTIF 06 : ces deux nœuds doivent vivre hors de startSystem()
+    // pour que terminate puisse réellement relâcher la tension.
+    let feedback = null, masterGain = null;
+
     // original physical constants
     const d1 = 0.003;
     const d2 = 0.0031;
 
     document.getElementById('btn').onclick = function() {
         if (!audioCtx) setupAudio();
+
         if (!isRunning) {
             audioCtx.resume().then(() => {
                 startSystem();
                 this.innerText = "release tension (terminate)";
                 document.getElementById('status-text').innerText = "active_feedback";
-                document.getElementById('freq-text').innerText = (1 / d1).toFixed(2);
                 isRunning = true;
                 draw();
             });
-        } else { location.reload(); }
+
+        } else {
+            // CORRECTIF 06 : relâcher la tension au lieu de recharger la page.
+            // La boucle s'éteint en s'entendant mourir, ce que l'instruction annonce.
+            isRunning = false;
+            feedback.gain.setTargetAtTime(0, audioCtx.currentTime, 0.6);
+            masterGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.8);
+            document.getElementById('status-text').innerText = "releasing_";
+            this.innerText = "push silence to the edge (initialize)";
+            setTimeout(() => {
+                if (!isRunning) {
+                    document.getElementById('status-text').innerText = "idle";
+                    document.getElementById('freq-text').innerText = "—";
+                }
+            }, 4000);
+        }
     };
 
     function setupAudio() {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         analyser = audioCtx.createAnalyser();
         analyser.fftSize = 2048;
-        dataArray = new Uint8Array(analyser.frequencyBinCount);
+        // CORRECTIF 07 : getByteTimeDomainData attend fftSize échantillons,
+        // pas frequencyBinCount. On ne voyait que la moitié de la fenêtre.
+        dataArray = new Uint8Array(analyser.fftSize);
         canvas = document.getElementById('scope');
         canvasCtx = canvas.getContext('2d');
     }
@@ -87,57 +114,82 @@
         const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
         const data = buffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
-        
+
         const noise = audioCtx.createBufferSource();
         noise.buffer = buffer; noise.loop = true;
 
         const noiseGain = audioCtx.createGain();
         noiseGain.gain.value = 0.002;
 
-        // back to original dual-resonator setup
-        const delay1 = audioCtx.createDelay(); delay1.delayTime.value = d1; 
+        // routage inchangé : les deux délais EN SÉRIE dans une seule boucle.
+        // Temps de boucle 3 + 3,1 = 6,1 ms -> fondamentale 163,9 hz + harmoniques.
+        const delay1 = audioCtx.createDelay(); delay1.delayTime.value = d1;
         const delay2 = audioCtx.createDelay(); delay2.delayTime.value = d2;
-        const feedback = audioCtx.createGain(); feedback.gain.value = 0.94; 
+        feedback = audioCtx.createGain(); feedback.gain.value = 0.94;
 
         const lpFilter = audioCtx.createBiquadFilter();
         lpFilter.type = "lowpass";
-        lpFilter.frequency.value = 3500; 
+        lpFilter.frequency.value = 3500;
 
         const compressor = audioCtx.createDynamicsCompressor();
         compressor.threshold.setValueAtTime(-30, audioCtx.currentTime);
         compressor.ratio.setValueAtTime(12, audioCtx.currentTime);
 
-        const masterGain = audioCtx.createGain();
+        masterGain = audioCtx.createGain();
         masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
         masterGain.gain.linearRampToValueAtTime(1.5, audioCtx.currentTime + 3);
 
-        // the original "wild" routing
+        // CORRECTIF 07 : un limiteur, comme dans after/without.
+        // masterGain monte à 1,5 et rien ne protégeait la sortie.
+        const limiter = audioCtx.createDynamicsCompressor();
+        limiter.threshold.setValueAtTime(-3, audioCtx.currentTime);
+        limiter.ratio.setValueAtTime(20, audioCtx.currentTime);
+
         noise.connect(noiseGain);
         noiseGain.connect(delay1);
         delay1.connect(delay2);
         delay2.connect(feedback);
-        feedback.connect(delay1); // cross-feedback creates the electric texture
-        
+        feedback.connect(delay1);
+
         delay2.connect(lpFilter);
         lpFilter.connect(compressor);
-        compressor.connect(analyser);
-        analyser.connect(masterGain);
-        masterGain.connect(audioCtx.destination);
+
+        // CORRECTIF 07 : l'analyseur est maintenant APRÈS masterGain et le limiteur.
+        // L'oscilloscope montre donc le son entendu, montée de trois secondes comprise.
+        compressor.connect(masterGain);
+        masterGain.connect(limiter);
+        limiter.connect(analyser);
+        analyser.connect(audioCtx.destination);
 
         noise.start();
     }
 
+    // CORRECTIF 05 : la fréquence affichée est lue dans le signal, pas écrite d'avance.
+    function measuredPeak() {
+        const bins = new Uint8Array(analyser.frequencyBinCount);
+        analyser.getByteFrequencyData(bins);
+        let max = 0, idx = 0;
+        for (let i = 1; i < bins.length; i++) if (bins[i] > max) { max = bins[i]; idx = i; }
+        return idx * audioCtx.sampleRate / analyser.fftSize;
+    }
+
     function draw() {
+        if (!isRunning) return;
         requestAnimationFrame(draw);
+
+        if (frame++ % 15 === 0) {
+            document.getElementById('freq-text').innerText = measuredPeak().toFixed(1);
+        }
+
         analyser.getByteTimeDomainData(dataArray);
         canvasCtx.fillStyle = '#000';
         canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
         canvasCtx.lineWidth = 1;
         canvasCtx.strokeStyle = '#222';
         canvasCtx.beginPath();
-        let sliceWidth = canvas.width * 1.0 / analyser.frequencyBinCount;
+        let sliceWidth = canvas.width / dataArray.length;
         let x = 0;
-        for (let i = 0; i < analyser.frequencyBinCount; i++) {
+        for (let i = 0; i < dataArray.length; i++) {
             let v = dataArray[i] / 128.0;
             let y = v * canvas.height / 2;
             if (i === 0) { canvasCtx.moveTo(x, y); } else { canvasCtx.lineTo(x, y); }

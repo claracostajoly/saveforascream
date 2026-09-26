@@ -40,14 +40,35 @@
             margin-top: 20px;
             font-size: 10px;
         }
+        /* retour en arrière : coin supérieur gauche, même régime typographique */
+        #nav-back {
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            z-index: 10;
+            color: #333;
+            cursor: pointer;
+            text-decoration: none;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            padding: 6px 10px;
+            margin: -6px -10px;
+            transition: color 0.3s;
+        }
+        #nav-back:hover { color: #888; }
     </style>
 </head>
 <body>
 
+    <div id="nav-back" title="retour">../</div>
+
     <div id="status">after / without</div>
 
     <div id="readout">
-        <div>status : <span id="state" class="data">idle</span></div>
+        <div>status   : <span id="state" class="data">idle</span></div>
+        <div>source   : white noise, generated at runtime</div>
+        <div>network  : 4 delay lines, local feedback</div>
+        <div>feedback : 0.85 / 1.00</div>
     </div>
 
     <!-- CORRECTIF 08 : « click to initialize » — la formulation que cite la thèse.
@@ -55,13 +76,20 @@
     <div class="instruction" id="hint">click to initialize</div>
 
     <script>
+
+        // retour en arrière par le coin supérieur gauche. stopPropagation() évite
+        // que ce clic déclenche aussi la pièce ou la navigation de la page.
+        document.getElementById('nav-back').addEventListener('click', (e) => {
+            e.stopPropagation();
+            window.history.back();
+        });
         let audioCtx;
         const state = document.getElementById('state');
 
         document.body.addEventListener('click', () => {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                state.innerText = 'loading_';
+                state.innerText = 'generating_';   // rien n'est chargé : 60 s de bruit sont fabriquées
                 startTheVoid();
                 document.getElementById('hint').style.opacity = '0';
                 document.getElementById('status').style.color = '#888';

@@ -34,9 +34,27 @@
         .log { margin-bottom: 2px; }
         .data { color: #444; }
         .manifesto-tiny { margin-top: 100px; max-width: 350px; color: #222; }
+        /* retour en arrière : coin supérieur gauche, même régime typographique */
+        #nav-back {
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            z-index: 10;
+            color: #333;
+            cursor: pointer;
+            text-decoration: none;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            padding: 6px 10px;
+            margin: -6px -10px;
+            transition: color 0.3s;
+        }
+        #nav-back:hover { color: #888; }
     </style>
 </head>
 <body>
+
+    <div id="nav-back" title="retour">../</div>
 
     <!-- CORRECTIF 07 : le tampon de dessin fait désormais 800x120 au lieu des
          300x150 par défaut étirés en 400x60 par le CSS. -->
@@ -46,7 +64,7 @@
 
     <!-- CORRECTIF 05 : plus de "digital void resonance" ni de "spectral emergence".
          Chaque ligne est soit un paramètre réel du graphe, soit une mesure. -->
-    <div class="log">milieu : audiocontext</div>
+    <div class="log">milieu : audiocontext, 2 delay lines in series</div>
     <div class="log">excitation : noise, gain 0.002</div>
     <div class="log">feedback : 0.94 / 1.00</div>
     <div class="log">resonance : <span id="freq-text" class="data">—</span> hz</div>
@@ -57,19 +75,31 @@
     </div>
 
     <script>
+
+        // retour en arrière par le coin supérieur gauche. stopPropagation() évite
+        // que ce clic déclenche aussi la pièce ou la navigation de la page.
+        document.getElementById('nav-back').addEventListener('click', (e) => {
+            e.stopPropagation();
+            window.history.back();
+        });
     let audioCtx, analyser, dataArray, canvas, canvasCtx;
-    let isRunning = false;
+    let isRunning = false;    // le système produit du son
+    let isReleasing = false;  // la boucle est en train de s'éteindre
     let frame = 0;
+
+    // fenêtre de tracé de l'oscilloscope, indépendante de la résolution d'analyse
+    const SCOPE_SAMPLES = 2048;
 
     // CORRECTIF 06 : ces deux nœuds doivent vivre hors de startSystem()
     // pour que terminate puisse réellement relâcher la tension.
-    let feedback = null, masterGain = null;
+    let feedback = null, masterGain = null, noiseSource = null;
 
     // original physical constants
     const d1 = 0.003;
     const d2 = 0.0031;
 
     document.getElementById('btn').onclick = function() {
+        if (isReleasing) return;   // pendant les quatre secondes du relâchement, le bouton ne répond pas
         if (!audioCtx) setupAudio();
 
         if (!isRunning) {
@@ -85,15 +115,23 @@
             // CORRECTIF 06 : relâcher la tension au lieu de recharger la page.
             // La boucle s'éteint en s'entendant mourir, ce que l'instruction annonce.
             isRunning = false;
+            isReleasing = true;
             feedback.gain.setTargetAtTime(0, audioCtx.currentTime, 0.6);
             masterGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.8);
             document.getElementById('status-text').innerText = "releasing_";
             this.innerText = "push silence to the edge (initialize)";
+
             setTimeout(() => {
-                if (!isRunning) {
-                    document.getElementById('status-text').innerText = "idle";
-                    document.getElementById('freq-text').innerText = "—";
-                }
+                // CORRECTIF : arrêter réellement, pour qu'« idle » soit vrai.
+                // Sans stop(), chaque relance empilait un réseau de délais de plus,
+                // inaudible mais toujours calculé.
+                if (noiseSource) { try { noiseSource.stop(); } catch (e) {} noiseSource = null; }
+                canvasCtx.fillStyle = '#000';
+                canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+                audioCtx.suspend();
+                isReleasing = false;
+                document.getElementById('status-text').innerText = "idle";
+                document.getElementById('freq-text').innerText = "—";
             }, 4000);
         }
     };
@@ -101,9 +139,11 @@
     function setupAudio() {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 2048;
-        // CORRECTIF 07 : getByteTimeDomainData attend fftSize échantillons,
-        // pas frequencyBinCount. On ne voyait que la moitié de la fenêtre.
+        // CORRECTIF : 8192 au lieu de 2048. À 2048, un bin vaut 21,5 hz et la
+        // fréquence affichée tombait sur 172 hz ; à 8192 elle tombe sur la
+        // résonance réelle de la boucle. Le tracé, lui, ne lit que les 2048
+        // premiers échantillons, donc l'oscilloscope garde exactement son allure.
+        analyser.fftSize = 8192;
         dataArray = new Uint8Array(analyser.fftSize);
         canvas = document.getElementById('scope');
         canvasCtx = canvas.getContext('2d');
@@ -115,7 +155,8 @@
         const data = buffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
 
-        const noise = audioCtx.createBufferSource();
+        noiseSource = audioCtx.createBufferSource();
+        const noise = noiseSource;
         noise.buffer = buffer; noise.loop = true;
 
         const noiseGain = audioCtx.createGain();
@@ -174,11 +215,14 @@
     }
 
     function draw() {
-        if (!isRunning) return;
+        // CORRECTIF : le tracé reste vivant pendant le relâchement, pour qu'on voie
+        // la forme d'onde s'effondrer en même temps qu'on l'entend mourir.
+        if (!isRunning && !isReleasing) return;
         requestAnimationFrame(draw);
 
+        // CORRECTIF : pas de décimale. Un bin vaut 5,4 hz, la décimale était inventée.
         if (frame++ % 15 === 0) {
-            document.getElementById('freq-text').innerText = measuredPeak().toFixed(1);
+            document.getElementById('freq-text').innerText = measuredPeak().toFixed(0);
         }
 
         analyser.getByteTimeDomainData(dataArray);
@@ -187,9 +231,9 @@
         canvasCtx.lineWidth = 1;
         canvasCtx.strokeStyle = '#222';
         canvasCtx.beginPath();
-        let sliceWidth = canvas.width / dataArray.length;
+        let sliceWidth = canvas.width / SCOPE_SAMPLES;
         let x = 0;
-        for (let i = 0; i < dataArray.length; i++) {
+        for (let i = 0; i < SCOPE_SAMPLES; i++) {
             let v = dataArray[i] / 128.0;
             let y = v * canvas.height / 2;
             if (i === 0) { canvasCtx.moveTo(x, y); } else { canvasCtx.lineTo(x, y); }

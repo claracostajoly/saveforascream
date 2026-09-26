@@ -36,13 +36,31 @@
         }
         #action-trigger:hover { color: #fff; }
         @media (max-width: 768px) { body { padding: 20px; } }
+        /* retour en arrière : coin supérieur gauche, même régime typographique */
+        #nav-back {
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            z-index: 10;
+            color: #333;
+            cursor: pointer;
+            text-decoration: none;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            padding: 6px 10px;
+            margin: -6px -10px;
+            transition: color 0.3s;
+        }
+        #nav-back:hover { color: #888; }
     </style>
 </head>
 <body>
 
+    <div id="nav-back" title="retour">../</div>
+
     <div class="status-container">
         <div class="log">y = y + 1</div>
-        <div class="log">y : <span id="iterations" class="data">—</span></div>
+        <div class="log">y : <span id="iterations" class="data">—</span> <span class="data">(+1 / 5 min)</span></div>
         <!-- La ligne qui rend l'érosion visible, montrée comme une descente :
              sans le point de départ, la valeur seule est illisible. -->
         <div class="log">erosion : <span id="erosion" class="data">—</span> hz</div>
@@ -64,31 +82,27 @@
         let isPlaying = false;
         let currentIteration = 1;
 
-        // NAVIGATION COMPATIBLE MULTI-CLIC & TOUCH (Exclut le bouton open_channel)
-        let clickTimer = null;
-        document.addEventListener('click', (e) => {
-            if (e.target.id === 'action-trigger') return;
-            if (clickTimer === null) {
-                clickTimer = setTimeout(() => {
-                    clickTimer = null;
-                    window.history.back();
-                }, 300);
-            } else {
-                clearTimeout(clickTimer);
-                clickTimer = null;
-                window.location.href = "note.html";
-            }
+
+        // retour en arrière par le coin supérieur gauche. stopPropagation() évite
+        // que ce clic déclenche aussi la pièce ou la navigation de la page.
+        document.getElementById('nav-back').addEventListener('click', (e) => {
+            e.stopPropagation();
+            window.history.back();
+        });
+
+        // Le clic simple ne renvoie plus en arrière : c'est le coin qui s'en charge.
+        // Le double-clic mène toujours à la note.
+        document.addEventListener('dblclick', (e) => {
+            if (e.target.id === 'action-trigger' || e.target.id === 'nav-back') return;
+            window.location.href = "note.html";
         });
 
         let lastTap = 0;
         document.addEventListener('touchend', (e) => {
-            if (e.target.id === 'action-trigger') return;
-            const currentTime = new Date().getTime();
-            const tapLength = currentTime - lastTap;
-            if (tapLength < 300 && tapLength > 0) {
-                window.location.href = "note.html";
-            }
-            lastTap = currentTime;
+            if (e.target.id === 'action-trigger' || e.target.id === 'nav-back') return;
+            const now = new Date().getTime();
+            if (now - lastTap < 300 && now - lastTap > 0) window.location.href = "note.html";
+            lastTap = now;
         });
 
         // ═══════════════════════════════════════════════════════════════════

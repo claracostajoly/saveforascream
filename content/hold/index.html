@@ -23,6 +23,20 @@
       touch-action: none;
     }
 
+    /* Le texte ne peut pas être sélectionné. Une sélection le repeindrait à plein
+       contraste et annulerait le seuil que la pièce tient ; il cesserait aussi de
+       dépendre de la lumière, puisqu'il pourrait être emporté ailleurs.
+       La double règle couvre le glisser de souris comme le tout-sélectionner. */
+    #text, #sensor, #nav-back {
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    #text::selection, #text *::selection,
+    #sensor::selection, #nav-back::selection {
+      background: transparent;
+      color: inherit;
+    }
+
     #text {
       max-width: 80%;
       font-size: 1rem;
@@ -43,6 +57,40 @@
       height:1.6em;
     }
 
+    /* état du capteur : même typographie que la pièce, un cran plus effacé.
+       Il dit si la condition d'apparition complète est réunie, et elle l'est
+       rarement : l'API n'est activée que sur une poignée de navigateurs. */
+    #sensor {
+      position: absolute;
+      bottom: 24px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      font-weight: 300;
+      color: #ececec;
+      opacity: 0.55;
+      pointer-events: none;
+    }
+
+    /* retour en arrière, dans le régime de la page */
+    #nav-back {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      z-index: 10;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      font-weight: 300;
+      color: #e2e2e2;
+      cursor: pointer;
+      padding: 6px 10px;
+      margin: -6px -10px;
+      transition: color 0.4s;
+    }
+    #nav-back:hover { color: #b8b8b8; }
+
     #noiseCanvas {
       position: absolute;
       inset: 0;
@@ -55,6 +103,8 @@
   </style>
 </head>
 <body>
+
+  <div id="nav-back" title="retour">../</div>
 
   <div id="text">
     <span class="title">hold</span>
@@ -80,12 +130,15 @@
     to keep the image
   </div>
 
+  <div id="sensor">sensor : unavailable</div>
+
   <canvas id="noiseCanvas"></canvas>
 
   <script>
     (function () {
       const canvas = document.getElementById('noiseCanvas');
       const ctx = canvas.getContext('2d');
+      const sensorLine = document.getElementById('sensor');
 
       const dpr = window.devicePixelRatio || 1;
       const noiseSize = 220;
@@ -120,6 +173,11 @@
       let amplitude = 0.01;
       let t = 0;
 
+      // L'Ambient Light Sensor n'est activé par défaut que sur une poignée de
+      // navigateurs. Partout ailleurs la pièce tourne sur ses valeurs fixes, et
+      // la dépendance à la lumière n'a pas lieu. La ligne le dit au lieu de le taire.
+      function say(state) { sensorLine.textContent = 'sensor : ' + state; }
+
       if ('AmbientLightSensor' in window) {
         try {
           const sensor = new AmbientLightSensor();
@@ -129,11 +187,18 @@
             const norm = Math.min(lux / 1000, 1);
             base = 0.03 + norm * 0.05;
             amplitude = 0.006 + norm * 0.012;
+            say(Math.round(lux) + ' lux');
+          });
+
+          // sans ce gestionnaire, une permission refusée restait silencieuse
+          sensor.addEventListener('error', (e) => {
+            say(e.error && e.error.name === 'NotAllowedError' ? 'denied' : 'unavailable');
           });
 
           sensor.start();
+          say('waiting');
         } catch (e) {
-          console.log("capteur non disponible");
+          say('unavailable');
         }
       }
 
@@ -163,9 +228,14 @@
     })();
   </script>
 
-  <!-- ✔️ ajout navigation -->
   <script>
-    document.addEventListener("dblclick", () => {
+    document.getElementById('nav-back').addEventListener('click', (e) => {
+      e.stopPropagation();
+      window.history.back();
+    });
+
+    document.addEventListener("dblclick", (e) => {
+      if (e.target.id === 'nav-back') return;
       window.location.href = "note.html";
     });
   </script>

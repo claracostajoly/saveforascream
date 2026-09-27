@@ -30,7 +30,9 @@ const CALME = (()=>{ const t=[...EN].sort((a,b)=>a-b); return t[Math.floor(t.len
 
 const cv=document.getElementById('c'), ctx=cv.getContext('2d',{alpha:false});
 const ui=id=>document.getElementById(id);
-const S={ rep:180, warm:75, dur:1.6, spd:0.60, ein:0.6, eout:2.2, xf:0.26, rec:0, seuil:0.6 };
+const S={ rep:140, warm:10, dep:25, dur:1.6, spd:0.60, ein:0.6, eout:2.2, xf:0.26, rec:0, seuil:0.6 };
+// rep : repos moyen entre deux reprises.  warm : immobilite garantie au demarrage.
+// dep : moyenne de la premiere attente seulement, pour qu'une reprise arrive tot.
 
 // ---- machine à états : repos → reprise → repos ----------------------------
 const segA=new Int32Array(N), segB=new Int32Array(N);
@@ -39,7 +41,7 @@ const DEPART=48;
 let pos=DEPART, njump=0, nev=0, horloge=0;
 let prec=-1, fondu=0;
 let phase='repos', attente=0, tRep=0, duree=0, sortie=false, vitEnv=0;
-function tirerAttente(){ return -Math.max(S.rep,0.5)*Math.log(1-Math.random()); }  // loi exponentielle
+function tirerAttente(m){ return -Math.max(m||S.rep,0.5)*Math.log(1-Math.random()); }  // loi exponentielle
 attente = 0;   // fixée après l'amorce
 
 function besoin(){ return (duree + S.ein*0.5 + S.eout*0.55) * G.fps * S.spd; }
@@ -88,7 +90,7 @@ function maj(dt){
   if(sortie && vitEnv<0.06){
     const i=Math.round(pos);
     if(EN[i]<=CALME || vitEnv<0.015){        // on se fige de préférence sur un état calme
-      pos=i; phase='repos'; attente=tirerAttente();
+      pos=i; phase='repos'; attente=tirerAttente(S.rep);
     }
   }
 }
@@ -119,7 +121,7 @@ function charge(src){ return new Promise((ok,no)=>{const i=new Image();i.onload=
   const oc=off.getContext('2d');
   const ch=document.getElementById('charge');
   ch.classList.add('off'); setTimeout(()=>ch.remove(),1100);
-  attente=tirerAttente();
+  attente=tirerAttente(S.dep);
 
   const IW=base.width, IH=base.height, B=TU.box;
   let sx=1;

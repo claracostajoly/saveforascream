@@ -27,6 +27,21 @@
   </main>
 
   <script>
+    (function () {
+      var v = document.querySelector('video');
+      if (!v) return;
+      v.muted = true;
+      v.defaultMuted = true;
+      var go = function () { var p = v.play(); if (p && p.catch) p.catch(function () {}); };
+      v.addEventListener('loadeddata', go);
+      v.addEventListener('canplay', go);
+      v.addEventListener('click', go);
+      document.addEventListener('visibilitychange', function () { if (!document.hidden) go(); });
+      go();
+    })();
+  </script>
+
+  <script>
     let clickTimer = null;
     document.addEventListener('click', (e) => {
       if (e.target.tagName === 'VIDEO' || e.target.tagName === 'AUDIO' || e.target.closest('audio')) return;

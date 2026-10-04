@@ -49,6 +49,18 @@
             transition: color 0.3s;
         }
         #nav-back:hover { color: #888; }
+    
+        /* Aucun texte du site ne peut être sélectionné. Une sélection repeint le
+           texte au contraste du navigateur et défait le régime graphique de la
+           page, qui travaille au seuil. Elle permet aussi d'emporter ailleurs un
+           texte dont la lisibilité dépend de son milieu d'apparition. */
+        *, *::before, *::after {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            user-select: none;
+        }
+        ::selection { background: transparent; color: inherit; }
+        ::-moz-selection { background: transparent; color: inherit; }
     </style>
 </head>
 <body>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>oeuvre_template</title>
+  <title>BLM1</title>
   <style>
     :root { 
       --bg: #000; 
@@ -57,9 +57,31 @@
         }
         ::selection { background: transparent; color: inherit; }
         ::-moz-selection { background: transparent; color: inherit; }
+    
+        /* Chemin vers la note. Même geste que « ../ » : rien n'est expliqué,
+           mais ce qui est atteignable est montré. Sans lui, la note n'était
+           joignable que par un double-clic que personne ne peut deviner. */
+        #nav-note {
+            position: fixed;
+            top: 18px;
+            right: 18px;
+            z-index: 10;
+            color: #555;
+            cursor: pointer;
+            font-size: 11px;
+            letter-spacing: 0.04em;
+            padding: 6px 10px;
+            margin: -6px -10px;
+            transition: color 0.3s;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        #nav-note:hover { color: #888; }
     </style>
 </head>
 <body>
+
+    <div id="nav-note" title="note">./note</div>
 
   <main>
     <figure>
@@ -117,6 +139,13 @@
       lastTap = currentTime;
     });
   </script>
+
+    <script>
+      document.getElementById('nav-note').addEventListener('click', (e) => {
+        e.stopPropagation();          // sinon le clic déclenche aussi la page
+        window.location.href = 'note.html';
+      });
+    </script>
 </body>
 </html>
 

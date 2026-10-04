@@ -5,10 +5,9 @@
   { "title": "BLM2", "path": "content/BLM2/" },
   { "title": "y = y + 1", "path": "content/y-y2/" },
   { "title": "x_hausted", "path": "content/x_hausted/" },
-  { "title": "sidescroll", "path": "content/sidescroll/" },
   { "title": "hold", "path": "content/hold/" },
   { "title": "BMo40", "path": "content/BMo40/" },
-  { "title": "after /without", "path": "content/after-without/" },
+  { "title": "after / without", "path": "content/after-without/" },
   { "title": "From: /To:", "path": "content/from-to/" },
   { "title": "lutherie of nothingness", "path": "content/lutherie-of-nothingness/" }
 ]

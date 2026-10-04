@@ -9,11 +9,16 @@
             background-color: #000;
             color: #444;
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            /* Ancré en haut à gauche, comme lutherie et y = y + 1. Un terminal
+               n'est pas centré, et c'est le régime graphique que le site cite.
+               HOLD reste la seule exception, et elle est justifiée dans la thèse. */
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            align-items: flex-start;
+            justify-content: flex-start;
             height: 100vh;
+            padding: 60px;
+            box-sizing: border-box;
             margin: 0;
             overflow: hidden;
             cursor: pointer;

@@ -66,6 +66,7 @@
     <div class="log">milieu : audiocontext, 2 delay lines in series</div>
     <div class="log">excitation : noise, gain 0.002</div>
     <div class="log">feedback : 0.94 / 1.00</div>
+    <div class="log">output : lowpass 3500 hz</div>
     <div class="log">resonance : <span id="freq-text" class="data">—</span> hz</div>
     <div class="log">status : <span id="status-text" class="data">idle</span></div>
 
@@ -204,13 +205,29 @@
         noise.start();
     }
 
-    // CORRECTIF 05 : la fréquence affichée est lue dans le signal, pas écrite d'avance.
-    function measuredPeak() {
-        const bins = new Uint8Array(analyser.frequencyBinCount);
-        analyser.getByteFrequencyData(bins);
-        let max = 0, idx = 0;
-        for (let i = 1; i < bins.length; i++) if (bins[i] > max) { max = bins[i]; idx = i; }
-        return idx * audioCtx.sampleRate / analyser.fftSize;
+    // La résonance affichée est celle de la BOUCLE, pas du partiel le plus fort.
+    // Comme rien n'amortit les aigus à l'intérieur, une vingtaine d'harmoniques ont
+    // des amplitudes voisines : le maximum du spectre sautait de l'une à l'autre et
+    // le chiffre ne se fixait jamais. L'autocorrélation cherche la période du signal,
+    // c'est-à-dire le tour de boucle lui-même.
+    const AC_WIN  = 2048;   // fenêtre d'analyse
+    const AC_MIN  = 66;     // 1,5 ms  -> 668 hz
+    const AC_MAX  = 662;    //  15 ms  ->  67 hz
+
+    function measuredResonance() {
+        let mean = 0;
+        for (let i = 0; i < AC_WIN; i++) mean += dataArray[i];
+        mean /= AC_WIN;
+
+        let best = -Infinity, bestLag = 0;
+        for (let lag = AC_MIN; lag <= AC_MAX; lag++) {
+            let sum = 0;
+            for (let i = 0; i < AC_WIN - lag; i++) {
+                sum += (dataArray[i] - mean) * (dataArray[i + lag] - mean);
+            }
+            if (sum > best) { best = sum; bestLag = lag; }
+        }
+        return bestLag ? audioCtx.sampleRate / bestLag : 0;
     }
 
     function draw() {
@@ -221,7 +238,7 @@
 
         // CORRECTIF : pas de décimale. Un bin vaut 5,4 hz, la décimale était inventée.
         if (frame++ % 15 === 0) {
-            document.getElementById('freq-text').innerText = measuredPeak().toFixed(0);
+            document.getElementById('freq-text').innerText = measuredResonance().toFixed(0);
         }
 
         analyser.getByteTimeDomainData(dataArray);

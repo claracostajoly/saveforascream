@@ -1,12 +1,58 @@
 [
-  { "title": "all I had to do was wait", "path": "content/all-i-had-to-do-was-wait/" },
-  { "title": "BK8", "path": "content/BK8/" },
-  { "title": "BLM1", "path": "content/BLM1/" },
-  { "title": "BLM2", "path": "content/BLM2/" },
-  { "title": "y = y + 1", "path": "content/y-y2/" },
-  { "title": "x_hausted", "path": "content/x_hausted/" },
-  { "title": "hold", "path": "content/hold/" },
-  { "title": "after / without", "path": "content/after-without/" },
-  { "title": "From: /To:", "path": "content/from-to/" },
-  { "title": "lutherie of nothingness", "path": "content/lutherie-of-nothingness/" }
+  {
+    "title": "BK8",
+    "path": "content/BK8/"
+  },
+  {
+    "title": "BLM1",
+    "path": "content/BLM1/"
+  },
+  {
+    "title": "LC-USF34-011593-D",
+    "path": "content/lc-usf34-011593-d/"
+  },
+  {
+    "title": "BLM2",
+    "path": "content/BLM2/"
+  },
+  {
+    "title": "All I Had To Do Was Wait",
+    "path": "content/all-i-had-to-do-was-wait/"
+  },
+  {
+    "title": "From:/To:",
+    "path": "content/from-to/"
+  },
+  {
+    "title": "x_hausted",
+    "path": "content/x_hausted/"
+  },
+  {
+    "title": "x_hausted (1)",
+    "path": "content/x_hausted-1/"
+  },
+  {
+    "title": "x_hausted (2), 1 billion dollars",
+    "path": "content/x_hausted-2/"
+  },
+  {
+    "title": "There’s",
+    "path": "content/theres/"
+  },
+  {
+    "title": "After/Without",
+    "path": "content/after-without/"
+  },
+  {
+    "title": "y = y + 1",
+    "path": "content/y-y2/"
+  },
+  {
+    "title": "HOLD",
+    "path": "content/hold/"
+  },
+  {
+    "title": "lutherie of nothingness",
+    "path": "content/lutherie-of-nothingness/"
+  }
 ]

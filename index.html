@@ -147,7 +147,7 @@
     window.addEventListener('resize', () => { if (shown) scatter(); });
 
     // Chargement du JSON avec correction du cache
-    fetch(JSON_PATH + '?_=(new Date()).getTime()')
+    fetch(JSON_PATH + '?_=' + Date.now())
       .then(r => r.json())
       .then(list => { works = list; })
       .catch(err => { console.error("Erreur JSON:", err); });

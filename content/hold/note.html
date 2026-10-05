@@ -37,7 +37,9 @@
       margin:0;
       margin-bottom:140px;
       text-align:center;
-      opacity:0.7;
+      /* même couleur et même opacité que le texte : rien ne ressort */
+      color:var(--muted);
+      opacity:0.75;
     }
 
     p{
@@ -60,10 +62,34 @@
         }
         ::selection { background: transparent; color: inherit; }
         ::-moz-selection { background: transparent; color: inherit; }
+    
+        /* Rien ne s'assombrit sous le doigt plus que le reste, et la
+           surbrillance des navigateurs mobiles est neutralisée. */
+        html, body { -webkit-tap-highlight-color: transparent; }
+
+        #nav-back {
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            z-index: 10;
+            font-size: 11px;
+            letter-spacing: 0.04em;
+            color: #bbb;
+            cursor: pointer;
+            padding: 6px 10px;
+            margin: -6px -10px;
+            transition: color 0.3s;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        #nav-back:hover { color: #666; }
     </style>
 </head>
 
 <body>
+
+  <div id="nav-back" title="retour">../</div>
+
   <main>
 
     <!-- ✔️ retour ACCUEIL (chemin sûr) -->
@@ -86,6 +112,18 @@
       window.location.href = "/saveforascream/content/hold/";
     });
   </script>
+
+
+    <script>
+      // « ../ » ramène à l'œuvre dont cette note est la note. stopPropagation()
+      // évite que le clic atteigne les gestionnaires de la page. Sans historique
+      // (note ouverte directement), on va à l'index du dossier, qui est l'œuvre.
+      document.getElementById('nav-back').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (window.history.length > 1) { window.history.back(); }
+        else { window.location.href = './'; }
+      });
+    </script>
 
 </body>
 </html>

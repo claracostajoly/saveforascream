@@ -7,7 +7,7 @@
   <style>
     :root {
       --bg: #000000;
-      --titre-color: #bbb; 
+      --titre-color: #888; 
       --texte-color: #888; 
     }
 
@@ -41,7 +41,7 @@
       font-weight: 400;
       margin-bottom: 150px; 
       text-align: center;
-      text-transform: lowercase;
+      
       color: var(--titre-color);
       cursor: pointer;
       transition: color 0.3s ease;
@@ -87,9 +87,36 @@
         }
         ::selection { background: transparent; color: inherit; }
         ::-moz-selection { background: transparent; color: inherit; }
+    
+        /* Rien ne s'éclaircit sous le doigt plus que le reste : le titre de la
+           note a la couleur du texte, et la surbrillance que les navigateurs
+           mobiles peignent sur un élément touché est neutralisée. */
+        html, body { -webkit-tap-highlight-color: transparent; }
+
+        /* Retour en arrière, même coin et même régime que sur les pièces.
+           Le titre ramenait déjà à l'œuvre, mais rien ne le montrait. */
+        #nav-back {
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            z-index: 10;
+            font-size: 11px;
+            letter-spacing: 0.04em;
+            color: #555;
+            cursor: pointer;
+            padding: 6px 10px;
+            margin: -6px -10px;
+            transition: color 0.3s;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        #nav-back:hover { color: #888; }
     </style>
 </head>
 <body>
+
+  <div id="nav-back" title="retour">../</div>
+
 
   <main>
     <h1 id="note-title">lutherie of nothingness_note</h1>
@@ -151,6 +178,18 @@
       }
     });
   </script>
+
+
+    <script>
+      // « ../ » ramène à l'œuvre dont cette note est la note. stopPropagation()
+      // évite que le clic atteigne les gestionnaires de la page. Sans historique
+      // (note ouverte directement), on va à l'index du dossier, qui est l'œuvre.
+      document.getElementById('nav-back').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (window.history.length > 1) { window.history.back(); }
+        else { window.location.href = './'; }
+      });
+    </script>
 
 </body>
 </html>

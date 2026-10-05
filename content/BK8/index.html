@@ -77,9 +77,33 @@
             user-select: none;
         }
         #nav-note:hover { color: #888; }
+    
+        /* Retour en arriere, meme coin et meme regime que sur les autres pages.
+           Le clic n'importe sur la page ramenait deja en arriere, mais rien
+           ne le montrait : ce coin est la seule forme visible du retour. */
+        #nav-back {
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            z-index: 10;
+            color: #555;
+            cursor: pointer;
+            font-size: 11px;
+            letter-spacing: 0.04em;
+            padding: 6px 10px;
+            margin: -6px -10px;
+            transition: color 0.3s;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        #nav-back:hover { color: #888; }
+        html, body { -webkit-tap-highlight-color: transparent; }
     </style>
 </head>
 <body>
+
+    <div id="nav-back" title="retour">../</div>
+
 
     <div id="nav-note" title="note">./note</div>
 
@@ -146,6 +170,17 @@
         window.location.href = 'note.html';
       });
     </script>
+
+    <script>
+      // stopPropagation() : sans lui, ce clic atteindrait aussi le gestionnaire
+      // de page, qui lance son propre minuteur de simple/double clic.
+      document.getElementById('nav-back').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (window.history.length > 1) { window.history.back(); }
+        else { window.location.href = '../../index.html'; }
+      });
+    </script>
+
 </body>
 </html>
 

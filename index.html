@@ -47,7 +47,6 @@
       transition: opacity .2s ease, transform .25s ease;
       padding: .1rem .2rem; pointer-events: auto;
       color: var(--text-color);
-      /* text-transform: lowercase supprimé pour voir les majuscules */
     }
     
     .entry:hover { opacity: 1; }
@@ -80,40 +79,104 @@
 
     function rand(min, max) { return Math.random() * (max - min) + min; }
 
+    // Dispersion des titres.
+    //
+    // L'ancienne version ne comparait que les ordonnees de deux titres et
+    // renoncait apres quatre-vingts essais : deux titres a la meme hauteur
+    // mais a des abscisses voisines se chevauchaient, et le nom du site
+    // pouvait se faire traverser.
+    //
+    // Desormais, une bande horizontale par titre. Une bande qui croise le
+    // nom du site n'est donnee qu'a un titre assez court pour tenir a sa
+    // gauche ou a sa droite ; les autres vont ailleurs. Le hasard reste
+    // entier, le chevauchement devient impossible tant qu'il reste des
+    // bandes, ce qui est le cas des le format d'un telephone.
     function scatter() {
       const entries = Array.from(row.children);
       if (!entries.length) return;
 
       const W = window.innerWidth;
       const H = window.innerHeight;
-      const margin = 60;
-      const tRect = titre.getBoundingClientRect();
-      const pad = 60;
-      const forbid = {
-        left: tRect.left - pad, right: tRect.right + pad,
-        top: tRect.top - pad, bottom: tRect.bottom + pad
-      };
+      const marge   = 24;
+      let   blanc   = 14;   // blanc minimal entre deux titres
+      const garde   = 24;   // garde autour du nom du site
 
-      const usedY = [];
-      const minYSpacing = 35;
+      const t = titre.getBoundingClientRect();
+      const nom = { left: t.left - garde, top: t.top - garde,
+                    right: t.right + garde, bottom: t.bottom + garde };
+
+      const hMax  = Math.max(...entries.map(el => el.offsetHeight || 18));
+      let   bande = hMax + 2 * blanc;
+      let   nb    = Math.max(1, Math.floor((H - 2 * marge) / bande));
+      // ecran trop court pour une bande par titre : le blanc se resserre
+      // plutot que de laisser deux titres partager une bande.
+      while (nb < entries.length && blanc > 4) {
+        blanc -= 2;
+        bande  = hMax + 2 * blanc;
+        nb     = Math.max(1, Math.floor((H - 2 * marge) / bande));
+      }
+
+      // bandes libres, dans un ordre melange (Fisher-Yates)
+      const libres = Array.from({ length: nb }, (_, i) => i);
+      for (let i = libres.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [libres[i], libres[j]] = [libres[j], libres[i]];
+      }
+
+      // intervalles d'abscisses praticables pour une largeur w dans une bande
+      function creneaux(w, yHaut, yBas) {
+        const xMax = W - w - marge;
+        if (xMax < marge) return [];
+        const croise = !(yBas <= nom.top || yHaut >= nom.bottom);
+        if (!croise) return [[marge, xMax]];
+        const out = [];
+        const gauche = nom.left - blanc - w;        // tient a gauche du nom ?
+        if (gauche >= marge) out.push([marge, Math.min(gauche, xMax)]);
+        const droite = nom.right + blanc;           // tient a sa droite ?
+        if (droite <= xMax) out.push([droite, xMax]);
+        return out;
+      }
+
+      const poses = [];
+      const touche = (a, b) =>
+        !(a.right + blanc <= b.left || a.left >= b.right + blanc ||
+          a.bottom + blanc <= b.top || a.top >= b.bottom + blanc);
 
       entries.forEach(el => {
-        const w = el.offsetWidth || 80;
-        const h = el.offsetHeight || 20;
-        let x, y, tries = 0;
-        while (true) {
-          x = rand(margin, W - w - margin);
-          y = rand(margin, H - h - margin);
-          const overlapTitle = !(x + w < forbid.left || x > forbid.right || y + h < forbid.top || y > forbid.bottom);
-          if (overlapTitle && tries < 50) { tries++; continue; }
-          let tooCloseY = false;
-          for (const yUsed of usedY) {
-            if (Math.abs(y - yUsed) < minYSpacing) { tooCloseY = true; break; }
-          }
-          if (tooCloseY && tries < 80) { tries++; continue; }
-          usedY.push(y);
-          break;
+        const w = el.offsetWidth  || 80;
+        const h = el.offsetHeight || 18;
+
+        // premiere bande melangee ou ce titre tient reellement
+        let k = -1, inter = null;
+        for (let i = 0; i < libres.length; i++) {
+          const yHaut = marge + libres[i] * bande + blanc;
+          const yBas  = yHaut + h;
+          const c = creneaux(w, yHaut, yBas);
+          if (c.length) { k = i; inter = { c, yHaut, yBas }; break; }
         }
+
+        let x, y;
+        if (k >= 0) {
+          libres.splice(k, 1);                     // la bande est prise
+          const seg = inter.c[Math.floor(Math.random() * inter.c.length)];
+          x = rand(seg[0], seg[1]);
+          y = inter.yHaut;
+        } else {
+          // fenetre trop petite pour loger tout le monde : on garde le
+          // placement le moins mauvais plutot que de boucler sans fin.
+          let pire = Infinity;
+          for (let essai = 0; essai < 150; essai++) {
+            const bx = rand(marge, Math.max(marge, W - w - marge));
+            const by = rand(marge, Math.max(marge, H - h - marge));
+            const boite = { left: bx, top: by, right: bx + w, bottom: by + h };
+            let conflits = touche(boite, nom) ? 1 : 0;
+            for (const q of poses) if (touche(boite, q)) conflits++;
+            if (conflits < pire) { pire = conflits; x = bx; y = by; }
+            if (!conflits) break;
+          }
+        }
+
+        poses.push({ left: x, top: y, right: x + w, bottom: y + h });
         el.style.transform = `translate(${x}px, ${y}px)`;
       });
     }

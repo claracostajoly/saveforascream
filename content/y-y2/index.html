@@ -125,7 +125,8 @@
         // que ce clic déclenche aussi la pièce ou la navigation de la page.
         document.getElementById('nav-back').addEventListener('click', (e) => {
             e.stopPropagation();
-            window.history.back();
+            if (window.history.length > 1) { window.history.back(); }
+            else { window.location.href = '../../index.html'; }
         });
 
         // Le clic simple ne renvoie plus en arrière : c'est le coin qui s'en charge.

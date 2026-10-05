@@ -124,7 +124,8 @@
         // que ce clic déclenche aussi la pièce ou la navigation de la page.
         document.getElementById('nav-back').addEventListener('click', (e) => {
             e.stopPropagation();
-            window.history.back();
+            if (window.history.length > 1) { window.history.back(); }
+            else { window.location.href = '../../index.html'; }
         });
         let audioCtx;
         const state = document.getElementById('state');

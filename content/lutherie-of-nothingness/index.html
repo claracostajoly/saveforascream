@@ -19,7 +19,7 @@
             height: 60px;
             margin-bottom: 40px;
             display: block;
-            opacity: 0.3;
+            opacity: 0.75;
             border-top: 1px solid #111;
             border-bottom: 1px solid #111;
         }
@@ -114,7 +114,8 @@
         // que ce clic déclenche aussi la pièce ou la navigation de la page.
         document.getElementById('nav-back').addEventListener('click', (e) => {
             e.stopPropagation();
-            window.history.back();
+            if (window.history.length > 1) { window.history.back(); }
+            else { window.location.href = '../../index.html'; }
         });
     let audioCtx, analyser, dataArray, canvas, canvasCtx;
     let isRunning = false;    // le système produit du son
@@ -278,8 +279,8 @@
         analyser.getByteTimeDomainData(dataArray);
         canvasCtx.fillStyle = '#000';
         canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
-        canvasCtx.lineWidth = 1;
-        canvasCtx.strokeStyle = '#222';
+        canvasCtx.lineWidth = 2;
+        canvasCtx.strokeStyle = '#444';
         canvasCtx.beginPath();
         let sliceWidth = canvas.width / SCOPE_SAMPLES;
         let x = 0;

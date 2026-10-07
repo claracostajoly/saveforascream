@@ -14,15 +14,6 @@
             text-transform: lowercase;
             line-height: 1.6;
         }
-        canvas {
-            width: 400px;
-            height: 60px;
-            margin-bottom: 40px;
-            display: block;
-            opacity: 0.75;
-            border-top: 1px solid #111;
-            border-bottom: 1px solid #111;
-        }
         #btn {
             cursor: pointer;
             color: #555;
@@ -89,10 +80,6 @@
 
     <div id="nav-back" title="retour">../</div>
 
-    <!-- CORRECTIF 07 : le tampon de dessin fait désormais 800x120 au lieu des
-         300x150 par défaut étirés en 400x60 par le CSS. -->
-    <canvas id="scope" width="800" height="120"></canvas>
-
     <div id="btn">push silence to the edge (initialize)</div>
 
     <!-- CORRECTIF 05 : plus de "digital void resonance" ni de "spectral emergence".
@@ -117,13 +104,10 @@
             if (window.history.length > 1) { window.history.back(); }
             else { window.location.href = '../../index.html'; }
         });
-    let audioCtx, analyser, dataArray, canvas, canvasCtx;
+    let audioCtx, analyser, dataArray;
     let isRunning = false;    // le système produit du son
     let isReleasing = false;  // la boucle est en train de s'éteindre
     let frame = 0;
-
-    // fenêtre de tracé de l'oscilloscope, indépendante de la résolution d'analyse
-    const SCOPE_SAMPLES = 2048;
 
     // CORRECTIF 06 : ces deux nœuds doivent vivre hors de startSystem()
     // pour que terminate puisse réellement relâcher la tension.
@@ -161,8 +145,6 @@
                 // Sans stop(), chaque relance empilait un réseau de délais de plus,
                 // inaudible mais toujours calculé.
                 if (noiseSource) { try { noiseSource.stop(); } catch (e) {} noiseSource = null; }
-                canvasCtx.fillStyle = '#000';
-                canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
                 audioCtx.suspend();
                 isReleasing = false;
                 document.getElementById('status-text').innerText = "idle";
@@ -180,8 +162,6 @@
         // premiers échantillons, donc l'oscilloscope garde exactement son allure.
         analyser.fftSize = 8192;
         dataArray = new Uint8Array(analyser.fftSize);
-        canvas = document.getElementById('scope');
-        canvasCtx = canvas.getContext('2d');
     }
 
     function startSystem() {
@@ -276,21 +256,9 @@
             document.getElementById('freq-text').innerText = measuredResonance().toFixed(0);
         }
 
+        // l'oscilloscope a été retiré : le signal est toujours lu, mais seulement
+        // pour mesurer la résonance affichée.
         analyser.getByteTimeDomainData(dataArray);
-        canvasCtx.fillStyle = '#000';
-        canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
-        canvasCtx.lineWidth = 2;
-        canvasCtx.strokeStyle = '#444';
-        canvasCtx.beginPath();
-        let sliceWidth = canvas.width / SCOPE_SAMPLES;
-        let x = 0;
-        for (let i = 0; i < SCOPE_SAMPLES; i++) {
-            let v = dataArray[i] / 128.0;
-            let y = v * canvas.height / 2;
-            if (i === 0) { canvasCtx.moveTo(x, y); } else { canvasCtx.lineTo(x, y); }
-            x += sliceWidth;
-        }
-        canvasCtx.stroke();
     }
     </script>
 

@@ -51,11 +51,17 @@
     /* état du capteur : même typographie que la pièce, un cran plus effacé.
        Il dit si la condition d'apparition complète est réunie, et elle l'est
        rarement : l'API n'est activée que sur une poignée de navigateurs. */
-    #sensor {
+    #sensor-zone {
       position: absolute;
       bottom: 24px;
       left: 0;
       right: 0;
+      padding: 0 16px;
+      text-align: center;
+      pointer-events: none;
+    }
+    #sensor-how { margin-top: 4px; }
+    #sensor, #sensor-how {
       text-align: center;
       font-size: 0.7rem;
       letter-spacing: 0.1em;
@@ -135,7 +141,11 @@
     just enough noise
   </div>
 
-  <div id="sensor">sensor : unavailable</div>
+  <!-- ce qui rend le capteur possible, dit en texte sous son état -->
+  <div id="sensor-zone">
+    <div id="sensor">sensor : unavailable</div>
+    <div id="sensor-how">ambient light sensor · chrome on android, with <span style="white-space:nowrap">chrome://flags/#enable-generic-sensor-extra-classes</span> enabled</div>
+  </div>
 
   <canvas id="noiseCanvas"></canvas>
 

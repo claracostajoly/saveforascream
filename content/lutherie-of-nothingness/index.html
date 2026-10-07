@@ -135,8 +135,18 @@
             // La boucle s'éteint en s'entendant mourir, ce que l'instruction annonce.
             isRunning = false;
             isReleasing = true;
-            feedback.gain.setTargetAtTime(0, audioCtx.currentTime, 0.6);
-            masterGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.8);
+            // CORRECTIF : figer d'abord les automations en cours. Si l'on relâchait
+            // pendant les trois secondes de montée, la rampe vers 1,5 restait
+            // programmée : le volume remontait au maximum alors que la boucle était
+            // déjà coupée, et l'on entendait le bruit brut à pleine puissance,
+            // puis une coupure sèche quatre secondes plus tard.
+            const now = audioCtx.currentTime;
+            for (const p of [feedback.gain, masterGain.gain]) {
+                if (p.cancelAndHoldAtTime) { p.cancelAndHoldAtTime(now); }
+                else { const v = p.value; p.cancelScheduledValues(now); p.setValueAtTime(v, now); }
+            }
+            feedback.gain.setTargetAtTime(0, now, 0.6);
+            masterGain.gain.setTargetAtTime(0, now, 0.8);
             document.getElementById('status-text').innerText = "releasing_";
             this.innerText = "push silence to the edge (initialize)";
 

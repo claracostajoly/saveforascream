@@ -60,8 +60,7 @@
       text-align: center;
       pointer-events: none;
     }
-    #sensor-how { margin-top: 4px; }
-    #sensor, #sensor-how {
+    #sensor {
       text-align: center;
       font-size: 0.7rem;
       letter-spacing: 0.1em;
@@ -141,10 +140,8 @@
     just enough noise
   </div>
 
-  <!-- ce qui rend le capteur possible, dit en texte sous son état -->
   <div id="sensor-zone">
-    <div id="sensor">sensor : unavailable</div>
-    <div id="sensor-how">ambient light sensor · chrome on android, with <span style="white-space:nowrap">chrome://flags/#enable-generic-sensor-extra-classes</span> enabled</div>
+    <div id="sensor">ambient light sensor : off</div>
   </div>
 
   <canvas id="noiseCanvas"></canvas>
@@ -191,7 +188,7 @@
       // L'Ambient Light Sensor n'est activé par défaut que sur une poignée de
       // navigateurs. Partout ailleurs la pièce tourne sur ses valeurs fixes, et
       // la dépendance à la lumière n'a pas lieu. La ligne le dit au lieu de le taire.
-      function say(state) { sensorLine.textContent = 'sensor : ' + state; }
+      function say(on) { sensorLine.textContent = 'ambient light sensor : ' + (on ? 'on' : 'off'); }
 
       if ('AmbientLightSensor' in window) {
         try {
@@ -202,18 +199,18 @@
             const norm = Math.min(lux / 1000, 1);
             base = 0.03 + norm * 0.05;
             amplitude = 0.006 + norm * 0.012;
-            say(Math.round(lux) + ' lux');
+            say(true);
           });
 
           // sans ce gestionnaire, une permission refusée restait silencieuse
           sensor.addEventListener('error', (e) => {
-            say(e.error && e.error.name === 'NotAllowedError' ? 'denied' : 'unavailable');
+            say(false);
           });
 
           sensor.start();
-          say('waiting');
+          say(false);   // « on » seulement quand une mesure arrive vraiment
         } catch (e) {
-          say('unavailable');
+          say(false);
         }
       }
 

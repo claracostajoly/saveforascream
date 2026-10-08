@@ -52,6 +52,18 @@
         }
         ::selection { background: transparent; color: inherit; }
         ::-moz-selection { background: transparent; color: inherit; }
+
+        /* Aucune image ne se laisse prélever d'un geste. Même raison que pour le
+           texte : ce qui est montré ici dépend de son milieu d'apparition, et
+           l'emporter ailleurs — dans un dossier, dans un fil — le rend à un
+           contraste qui n'est pas le sien. La règle n'empêche rien, elle énonce.
+           Une capture d'écran reste possible, et le fichier reste joignable par
+           son adresse : c'est le web, aucune page ne peut faire autrement. */
+        img, video {
+            -webkit-user-drag: none;
+            user-drag: none;
+            -webkit-touch-callout: none;
+        }
     
         /* Chemin vers la note. Même geste que « ../ » : rien n'est expliqué,
            mais ce qui est atteignable est montré. Sans lui, la note n'était
@@ -276,6 +288,17 @@
       document.getElementById('nav-note').addEventListener('click', (e) => {
         e.stopPropagation();          // sinon le clic déclenche aussi la page
         window.location.href = 'note.html';
+      });
+    </script>
+
+    <script>
+      /* Le menu contextuel est la porte la plus courte vers « enregistrer
+         l'image ». La fermer est un geste, pas une protection. */
+      document.addEventListener('contextmenu', (e) => {
+        if (e.target.tagName === 'IMG' || e.target.tagName === 'VIDEO') e.preventDefault();
+      });
+      document.addEventListener('dragstart', (e) => {
+        if (e.target.tagName === 'IMG') e.preventDefault();
       });
     </script>
 </body>

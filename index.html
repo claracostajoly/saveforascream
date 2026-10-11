@@ -92,42 +92,69 @@
 
     function rand(min, max) { return Math.random() * (max - min) + min; }
 
+    // Les entrées sont tirées au hasard, mais jamais l'une sur l'autre ni sur le
+    // titre, quelle que soit la taille de l'écran (téléphone compris).
     function scatter() {
       const entries = Array.from(row.children);
       if (!entries.length) return;
+      entries.forEach(el => { el.style.fontSize = ''; });
 
       const W = window.innerWidth;
       const H = window.innerHeight;
-      const margin = 60;
-      const tRect = titre.getBoundingClientRect();
-      const pad = 60;
-      const forbid = {
-        left: tRect.left - pad, right: tRect.right + pad,
-        top: tRect.top - pad, bottom: tRect.bottom + pad
-      };
+      const margin = Math.max(14, Math.min(60, W * 0.06, H * 0.06));
+      const gap = 10;                       // écart minimal entre deux entrées
+      const tR = titre.getBoundingClientRect();
+      const pad = Math.min(60, H * 0.05);
+      const forbid = { left: tR.left - pad, right: tR.right + pad, top: tR.top - pad, bottom: tR.bottom + pad };
 
-      const usedY = [];
-      const minYSpacing = 35;
+      const hit = (r, o, g) => !(r.x + r.w + g <= o.left || r.x - g >= o.right || r.y + r.h + g <= o.top || r.y - g >= o.bottom);
+      const box = r => ({ left: r.x, right: r.x + r.w, top: r.y, bottom: r.y + r.h });
 
-      entries.forEach(el => {
-        const w = el.offsetWidth || 80;
-        const h = el.offsetHeight || 20;
-        let x, y, tries = 0;
-        while (true) {
-          x = rand(margin, W - w - margin);
-          y = rand(margin, H - h - margin);
-          const overlapTitle = !(x + w < forbid.left || x > forbid.right || y + h < forbid.top || y > forbid.bottom);
-          if (overlapTitle && tries < 50) { tries++; continue; }
-          let tooCloseY = false;
-          for (const yUsed of usedY) {
-            if (Math.abs(y - yUsed) < minYSpacing) { tooCloseY = true; break; }
+      // 1) tirage libre, avec refus de tout chevauchement
+      function libre() {
+        const placed = [];
+        for (const el of entries) {
+          const w = el.offsetWidth || 80, h = el.offsetHeight || 20;
+          let ok = null;
+          for (let t = 0; t < 600 && !ok; t++) {
+            const r = { x: rand(margin, Math.max(margin, W - w - margin)), y: rand(margin, Math.max(margin, H - h - margin)), w, h };
+            if (hit(r, forbid, 0)) continue;
+            if (placed.some(p => hit(r, box(p), gap))) continue;
+            ok = r;
           }
-          if (tooCloseY && tries < 80) { tries++; continue; }
-          usedY.push(y);
-          break;
+          if (!ok) return null;
+          placed.push(ok);
         }
-        el.style.transform = `translate(${x}px, ${y}px)`;
-      });
+        return placed;
+      }
+
+      // 2) repli : une entrée par ligne, lignes mélangées, position horizontale au hasard
+      function lignes() {
+        const h = Math.max(...entries.map(el => el.offsetHeight || 20));
+        const step = h + gap;
+        const slots = [];
+        for (let y = margin; y + h <= H - margin; y += step) {
+          if (!(y + h <= forbid.top || y >= forbid.bottom)) continue;
+          slots.push(y);
+        }
+        if (slots.length < entries.length) return null;
+        for (let i = slots.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [slots[i], slots[j]] = [slots[j], slots[i]]; }
+        return entries.map((el, i) => {
+          const w = el.offsetWidth || 80;
+          return { x: rand(margin, Math.max(margin, W - w - margin)), y: slots[i], w, h };
+        });
+      }
+
+      let pos = null, taille = 14;
+      for (let essai = 0; essai < 8 && !pos; essai++) {
+        pos = libre() || lignes();
+        if (!pos) {                          // écran trop petit : on réduit le corps et on recommence
+          taille = Math.max(9, taille - 1);
+          entries.forEach(el => { el.style.fontSize = taille + 'px'; });
+        }
+      }
+      if (!pos) pos = lignes() || entries.map((el, i) => ({ x: margin, y: margin + i * ((H - 2 * margin) / entries.length) }));
+      entries.forEach((el, i) => { el.style.transform = `translate(${pos[i].x}px, ${pos[i].y}px)`; });
     }
 
     function buildEntries() {

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>nosebleed</title>
+<style>
+  :root { color-scheme: dark; }
+  html,body { margin:0; height:100%; background:#000; overflow:hidden; overscroll-behavior:none;
+              font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+              cursor: crosshair; }
+
+  /* Rien à voir : la pièce est du son seul, en boucle. La page reste noire. */
+
+        /* Aucun texte du site ne peut être sélectionné. Une sélection repeint le
+           texte au contraste du navigateur et défait le régime graphique de la
+           page, qui travaille au seuil. Elle permet aussi d'emporter ailleurs un
+           texte dont la lisibilité dépend de son milieu d'apparition. */
+        *, *::before, *::after {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            user-select: none;
+        }
+        ::selection { background: transparent; color: inherit; }
+        ::-moz-selection { background: transparent; color: inherit; }
+
+        #nav-back, #nav-son {
+            position: fixed;
+            z-index: 10;
+            color: #555;
+            cursor: pointer;
+            font-size: 11px;
+            letter-spacing: 0.04em;
+            padding: 6px 10px;
+            margin: -6px -10px;
+            transition: color 0.3s, opacity 1s;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        /* Retour en arriere, meme coin et meme regime que sur les autres pages. */
+        #nav-back { top: 18px; left: 18px; }
+        /* Les navigateurs refusent de lancer le son sans un geste du visiteur.
+           Tant que ce geste n'a pas eu lieu, la page est muette et ce coin le
+           dit ; le premier clic rend le son, rien d'autre. */
+        #nav-son { bottom: 18px; left: 18px; }
+        #nav-back:hover, #nav-son:hover { color: #888; }
+        .off { opacity: 0 !important; pointer-events: none; }
+        html, body { -webkit-tap-highlight-color: transparent; }
+</style>
+</head>
+<body>
+
+<audio id="a" src="saveforascream.mp4" loop preload="auto"></audio>
+
+<div id="nav-back" title="retour">../</div>
+<div id="nav-son" class="off" title="son">./son</div>
+
+<script>
+  const a = document.getElementById('a');
+  const son = document.getElementById('nav-son');
+  let muet = true;
+
+  // Lecture avec son dès l'ouverture ; si le navigateur la refuse, le coin
+  // « ./son » apparaît et le premier geste du visiteur la lance.
+  function lancer() {
+    const p = a.play();
+    if (p && p.then) p.then(() => { muet = false; son.classList.add('off'); })
+                      .catch(() => { muet = true; son.classList.remove('off'); });
+  }
+  function rendreSon() {
+    a.play().then(() => { muet = false; son.classList.add('off'); }).catch(()=>{});
+  }
+  lancer();
+
+  // 1 clic : retour. Si la page est encore muette, le premier geste sert
+  // d'abord à lancer le son.
+  let clicTimer = null;
+  document.addEventListener('click', () => {
+    if (muet) { rendreSon(); return; }
+    if (clicTimer === null) {
+      clicTimer = setTimeout(() => { clicTimer = null; history.back(); }, 300);
+    } else { clearTimeout(clicTimer); clicTimer = null; }
+  });
+  document.addEventListener('keydown', () => { if (muet) rendreSon(); });
+  document.addEventListener('touchstart', () => { if (muet) rendreSon(); }, {passive:true});
+
+  son.addEventListener('click', (e) => { e.stopPropagation(); rendreSon(); });
+  document.getElementById('nav-back').addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (history.length > 1) history.back(); else location.href = '../../index.html';
+  });
+
+  /* Le menu contextuel est la porte la plus courte vers « enregistrer le
+     fichier ». La fermer est un geste, pas une protection. */
+  document.addEventListener('contextmenu', (e) => {
+    if (e.target.tagName === 'AUDIO') e.preventDefault();
+  });
+</script>
+</body>
+</html>

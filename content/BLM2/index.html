@@ -12,7 +12,7 @@
 
   /* La vidéo occupe toute la page, en boucle, avec son. */
   #v { position:fixed; inset:0; width:100vw; height:100vh; height:100dvh;
-       object-fit:cover; background:#000; display:block; }
+       object-fit:contain; background:#000; display:block; }
 
         /* Aucun texte du site ne peut être sélectionné. Une sélection repeint le
            texte au contraste du navigateur et défait le régime graphique de la
@@ -109,7 +109,13 @@
     if (t - dernierTap < 300 && t - dernierTap > 0) { location.href = 'note.html'; e.preventDefault(); }
     dernierTap = t;
   });
-  document.addEventListener('keydown', () => { if (muet) rendreSon(); });
+  // Touche F : plein écran du navigateur, comme sur l'ancienne version de BLM2.
+  document.addEventListener('keydown', (e) => {
+    if (muet) rendreSon();
+    if (e.key.toLowerCase() === 'f') {
+      document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+    }
+  });
 
   son.addEventListener('click', (e) => { e.stopPropagation(); rendreSon(); });
   document.getElementById('nav-note').addEventListener('click', (e) => {

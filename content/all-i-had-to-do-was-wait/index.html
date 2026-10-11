@@ -11,9 +11,11 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       cursor: crosshair; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
     }
-    main{ max-width:680px; margin:250px auto 200px; padding:0 30px; }
-    figure{ margin:140px 0; width: 100%; }
-    img, video{ width:100%; height:auto; display:block; background:#0a0a0a; }
+    html,body{ height:100%; overflow:hidden; overscroll-behavior:none; }
+    main, figure{ margin:0; padding:0; }
+    /* La vidéo occupe toute la page, entière, comme BLM2. */
+    video{ position:fixed; inset:0; width:100vw; height:100vh; height:100dvh;
+           object-fit:contain; display:block; background:#000; }
     audio { width: 100%; margin-top: 10px; filter: invert(100%) hue-rotate(180deg) brightness(0.6); }
   
         /* Aucun texte du site ne peut être sélectionné. Une sélection repeint le
@@ -105,7 +107,6 @@
       var go = function () { var p = v.play(); if (p && p.catch) p.catch(function () {}); };
       v.addEventListener('loadeddata', go);
       v.addEventListener('canplay', go);
-      v.addEventListener('click', go);
       document.addEventListener('visibilitychange', function () { if (!document.hidden) go(); });
       go();
     })();
@@ -114,7 +115,7 @@
   <script>
     let clickTimer = null;
     document.addEventListener('click', (e) => {
-      if (e.target.tagName === 'VIDEO' || e.target.tagName === 'AUDIO' || e.target.closest('audio')) return;
+      if (e.target.tagName === 'AUDIO' || e.target.closest('audio')) return;
       if (clickTimer === null) {
         clickTimer = setTimeout(() => {
           clickTimer = null;
@@ -129,7 +130,7 @@
 
     let lastTap = 0;
     document.addEventListener('touchend', (e) => {
-      if (e.target.tagName === 'VIDEO' || e.target.tagName === 'AUDIO') return;
+      if (e.target.tagName === 'AUDIO') return;
       const currentTime = new Date().getTime();
       const tapLength = currentTime - lastTap;
       if (tapLength < 300 && tapLength > 0) {
@@ -167,5 +168,13 @@
         if (e.target.tagName === 'IMG') e.preventDefault();
       });
     </script>
+  <script>
+    // Touche F : plein écran du navigateur.
+    document.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === 'f') {
+        document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+      }
+    });
+  </script>
 </body>
 </html>

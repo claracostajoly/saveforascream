@@ -22,21 +22,40 @@
       overscroll-behavior: none;
     }
 
+    /* Comme sur BK8 : l'image est centrée dans la fenêtre, entière à
+       l'ouverture, sans avoir à faire défiler. Elle garde sa taille
+       (620 px de large, 827 px de haut, la même hauteur que BK8) tant que
+       la fenêtre le permet, et se réduit ensuite au lieu d'être coupée. */
+    body {
+      min-height: 100vh;
+      min-height: 100svh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
     main { 
       max-width: 680px; 
-      margin: 250px auto 200px; 
+      width: 100%;
+      margin: 0 auto; 
       padding: 0 30px; 
+      box-sizing: border-box;
     }
 
     figure { 
-      margin: 140px 0; 
+      margin: 0; 
       width: 100%; 
+      display: flex;
+      justify-content: center;
     }
 
     img, video { 
-      width: 100%; 
-      height: auto; 
       display: block; 
+      width: auto;
+      height: auto; 
+      max-width: 100%;
+      max-height: calc(100vh - 48px);
+      max-height: calc(100svh - 48px);
       background: #0a0a0a; 
     }
 

@@ -1,51 +1,19 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BLM1</title>
-  <style>
-    :root { 
-      --bg: #000; 
-      --fg: #888; 
-    }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>BLM1</title>
+<style>
+  :root { color-scheme: dark; }
+  html,body { margin:0; height:100%; background:#000; overflow:hidden; overscroll-behavior:none;
+              font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+              cursor: crosshair; }
 
-    html, body {
-      margin: 0; 
-      background: var(--bg); 
-      color: var(--fg);
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      cursor: crosshair; 
-      -webkit-font-smoothing: antialiased; 
-      -moz-osx-font-smoothing: grayscale;
-      /* Empêche le rebond du scroll sur mobile pour une sensation plus rigide */
-      overscroll-behavior: none;
-    }
+  /* La vidéo occupe toute la page, en boucle, avec son. */
+  #v { position:fixed; inset:0; width:100vw; height:100vh; height:100dvh;
+       object-fit:contain; background:#000; display:block; }
 
-    main { 
-      max-width: 680px; 
-      margin: 250px auto 200px; 
-      padding: 0 30px; 
-    }
-
-    figure { 
-      margin: 140px 0; 
-      width: 100%; 
-    }
-
-    img, video { 
-      width: 100%; 
-      height: auto; 
-      display: block; 
-      background: #0a0a0a; 
-    }
-
-    audio { 
-      width: 100%; 
-      margin-top: 10px; 
-      filter: invert(100%) hue-rotate(180deg) brightness(0.6); 
-    }
-  
         /* Aucun texte du site ne peut être sélectionné. Une sélection repeint le
            texte au contraste du navigateur et défait le régime graphique de la
            page, qui travaille au seuil. Elle permet aussi d'emporter ailleurs un
@@ -69,14 +37,12 @@
             user-drag: none;
             -webkit-touch-callout: none;
         }
-    
+
         /* Chemin vers la note. Même geste que « ../ » : rien n'est expliqué,
            mais ce qui est atteignable est montré. Sans lui, la note n'était
            joignable que par un double-clic que personne ne peut deviner. */
-        #nav-note {
+        #nav-note, #nav-back, #nav-son {
             position: fixed;
-            top: 18px;
-            right: 18px;
             z-index: 10;
             color: #555;
             cursor: pointer;
@@ -84,114 +50,87 @@
             letter-spacing: 0.04em;
             padding: 6px 10px;
             margin: -6px -10px;
-            transition: color 0.3s;
+            transition: color 0.3s, opacity 1s;
             -webkit-user-select: none;
             user-select: none;
         }
-        #nav-note:hover { color: #888; }
-    
-        /* Retour en arriere, meme coin et meme regime que sur les autres pages.
-           Le clic n'importe sur la page ramenait deja en arriere, mais rien
-           ne le montrait : ce coin est la seule forme visible du retour. */
-        #nav-back {
-            position: fixed;
-            top: 18px;
-            left: 18px;
-            z-index: 10;
-            color: #555;
-            cursor: pointer;
-            font-size: 11px;
-            letter-spacing: 0.04em;
-            padding: 6px 10px;
-            margin: -6px -10px;
-            transition: color 0.3s;
-            -webkit-user-select: none;
-            user-select: none;
-        }
-        #nav-back:hover { color: #888; }
+        #nav-note { top: 18px; right: 18px; }
+        /* Retour en arriere, meme coin et meme regime que sur les autres pages. */
+        #nav-back { top: 18px; left: 18px; }
+        /* Les navigateurs refusent de lancer le son sans un geste du visiteur.
+           Tant que ce geste n'a pas eu lieu, la vidéo tourne muette et ce coin
+           le dit ; le premier clic rend le son, rien d'autre. */
+        #nav-son { bottom: 18px; left: 18px; }
+        #nav-note:hover, #nav-back:hover, #nav-son:hover { color: #888; }
+        .off { opacity: 0 !important; pointer-events: none; }
         html, body { -webkit-tap-highlight-color: transparent; }
-    </style>
+</style>
 </head>
 <body>
 
-    <div id="nav-back" title="retour">../</div>
+<video id="v" src="saveforascream.mp4" aria-label="BLM1, 2021-. Panorama reconstruit à partir d’un dessin animé numérisé (Racketeer Rabbit, Friz Freleng, 1946), peinture numérique." autoplay loop playsinline preload="auto"
+       disablepictureinpicture controlslist="nodownload noplaybackrate nofullscreen"></video>
 
+<div id="nav-back" title="retour">../</div>
+<div id="nav-note" title="note">./note</div>
+<div id="nav-son" class="off" title="son">./son</div>
 
-    <div id="nav-note" title="note">./note</div>
+<script>
+  const v = document.getElementById('v');
+  const son = document.getElementById('nav-son');
+  let muet = false;
 
-  <main>
-    <figure>
-      <img src="saveforascream.jpg" alt="BLM1, 2021-. Panorama reconstruit à partir d’un dessin animé numérisé (Racketeer Rabbit, Friz Freleng, 1946), peinture numérique.">
-    </figure>
-  </main>
-
-  <script>
-    let clickTimer = null;
-
-    // NAVIGATION SOURIS
-    document.addEventListener('click', (e) => {
-      // Sécurité : ne pas naviguer si on clique sur les contrôles média
-      if (e.target.tagName === 'VIDEO' || e.target.tagName === 'AUDIO' || e.target.closest('audio')) return;
-
-      if (clickTimer === null) {
-        clickTimer = setTimeout(() => {
-          clickTimer = null;
-          // 1 CLIC : Retour à la page précédente (Nébuleuse)
-          window.history.back(); 
-        }, 300);
-      } else {
-        clearTimeout(clickTimer);
-        clickTimer = null;
-        // 2 CLICS : Aller vers la Note
-        window.location.href = "note.html"; 
-      }
+  // Lecture avec son ; si le navigateur la refuse, lecture muette en attendant un geste.
+  function lancer() {
+    v.muted = false;
+    const p = v.play();
+    if (p && p.catch) p.catch(() => {
+      muet = true; v.muted = true; son.classList.remove('off'); v.play().catch(()=>{});
     });
+  }
+  function rendreSon() {
+    muet = false; v.muted = false; son.classList.add('off'); v.play().catch(()=>{});
+  }
+  lancer();
 
-    // NAVIGATION MOBILE (TOUCH)
-    let lastTap = 0;
-    document.addEventListener('touchend', (e) => {
-      if (e.target.tagName === 'VIDEO' || e.target.tagName === 'AUDIO' || e.target.closest('audio')) return;
+  // 1 clic : retour ; 2 clics : note. Si la vidéo est encore muette,
+  // le premier geste sert d'abord à rendre le son.
+  let clicTimer = null;
+  document.addEventListener('click', (e) => {
+    if (muet) { rendreSon(); return; }
+    if (clicTimer === null) {
+      clicTimer = setTimeout(() => { clicTimer = null; history.back(); }, 300);
+    } else { clearTimeout(clicTimer); clicTimer = null; location.href = 'note.html'; }
+  });
+  let dernierTap = 0;
+  document.addEventListener('touchend', (e) => {
+    if (muet) return;   // le click qui suit rend le son
+    const t = Date.now();
+    if (t - dernierTap < 300 && t - dernierTap > 0) { location.href = 'note.html'; e.preventDefault(); }
+    dernierTap = t;
+  });
+  // Touche F : plein écran du navigateur, comme sur BLM2.
+  document.addEventListener('keydown', (e) => {
+    if (muet) rendreSon();
+    if (e.key.toLowerCase() === 'f') {
+      document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+    }
+  });
 
-      const currentTime = new Date().getTime();
-      const tapLength = currentTime - lastTap;
-      
-      if (tapLength < 300 && tapLength > 0) {
-        // DOUBLE TAP : Aller vers la Note
-        window.location.href = "note.html";
-        e.preventDefault(); // Empêche le zoom auto du navigateur
-      }
-      lastTap = currentTime;
-    });
-  </script>
+  son.addEventListener('click', (e) => { e.stopPropagation(); rendreSon(); });
+  document.getElementById('nav-note').addEventListener('click', (e) => {
+    e.stopPropagation(); location.href = 'note.html';
+  });
+  document.getElementById('nav-back').addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (history.length > 1) history.back(); else location.href = '../../index.html';
+  });
 
-    <script>
-      document.getElementById('nav-note').addEventListener('click', (e) => {
-        e.stopPropagation();          // sinon le clic déclenche aussi la page
-        window.location.href = 'note.html';
-      });
-    </script>
-
-    <script>
-      // stopPropagation() : sans lui, ce clic atteindrait aussi le gestionnaire
-      // de page, qui lance son propre minuteur de simple/double clic.
-      document.getElementById('nav-back').addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (window.history.length > 1) { window.history.back(); }
-        else { window.location.href = '../../index.html'; }
-      });
-    </script>
-
-
-    <script>
-      /* Le menu contextuel est la porte la plus courte vers « enregistrer
-         l'image ». La fermer est un geste, pas une protection. */
-      document.addEventListener('contextmenu', (e) => {
-        if (e.target.tagName === 'IMG' || e.target.tagName === 'VIDEO') e.preventDefault();
-      });
-      document.addEventListener('dragstart', (e) => {
-        if (e.target.tagName === 'IMG') e.preventDefault();
-      });
-    </script>
+  /* Le menu contextuel est la porte la plus courte vers « enregistrer
+     la vidéo ». La fermer est un geste, pas une protection. */
+  document.addEventListener('contextmenu', (e) => {
+    if (e.target.tagName === 'IMG' || e.target.tagName === 'VIDEO') e.preventDefault();
+  });
+</script>
 </body>
 </html>
-

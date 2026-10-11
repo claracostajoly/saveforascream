@@ -22,21 +22,29 @@
       overscroll-behavior: none;
     }
 
+    /* Les trois plaques, chacune aussi grande que la fenêtre le permet.
+       Le format est très vertical : c'est donc la hauteur qui commande. */
     main { 
-      max-width: 680px; 
-      margin: 250px auto 200px; 
+      max-width: 1100px; 
+      margin: 60px auto; 
       padding: 0 30px; 
+      box-sizing: border-box;
     }
 
     figure { 
-      margin: 140px 0; 
+      margin: 60px 0; 
       width: 100%; 
+      display: flex;
+      justify-content: center;
     }
 
     img, video { 
-      width: 100%; 
-      height: auto; 
       display: block; 
+      width: auto;
+      height: auto; 
+      max-width: 100%;
+      max-height: 88vh;
+      max-height: 88svh;
       background: #0a0a0a; 
     }
 
@@ -121,11 +129,15 @@
 
   <main>
     <figure>
-      <img src="saveforascream.jpg" alt="x_hausted (1), 2025. Impression UV sur dibond effet métal satiné, trois plaques de 28 × 50 cm. Vue d’installation.">
+      <img src="saveforascream.png" alt="x_hausted (1), 2025. Impression UV sur dibond effet métal satiné, trois plaques de 28 × 50 cm. Première plaque.">
     </figure>
 
     <figure>
-      <img src="saveforascream-2.jpg" alt="x_hausted (1), 2025. Image imprimée sur la troisième plaque, où le visage affleure à peine.">
+      <img src="saveforascream-2.png" alt="x_hausted (1), 2025. Impression UV sur dibond effet métal satiné, trois plaques de 28 × 50 cm. Deuxième plaque.">
+    </figure>
+
+    <figure>
+      <img src="saveforascream-3.png" alt="x_hausted (1), 2025. Impression UV sur dibond effet métal satiné, trois plaques de 28 × 50 cm. Troisième plaque.">
     </figure>
   </main>
 

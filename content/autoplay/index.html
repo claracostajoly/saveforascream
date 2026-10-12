@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autoplay</title>
+  <style>
+    :root {
+      --bg: #000;
+      --fg: #888;
+    }
+
+    html, body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      cursor: crosshair;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overscroll-behavior: none;
+    }
+
+    /* Un seul diptyque, centré dans la fenêtre à l'ouverture, sans défilement.
+       Le format est très horizontal (deux 16:9 côte à côte) : la largeur commande. */
+    main {
+      min-height: 100vh;
+      min-height: 100svh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 30px;
+      box-sizing: border-box;
+    }
+
+    figure { margin: 0; width: 100%; max-width: 1800px; }
+
+    img {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: #0a0a0a;
+    }
+
+    /* La légende ne dit que ce que la plateforme a fait :
+       son nom, l'heure où l'on s'endort, l'heure où l'on se réveille. */
+    figcaption {
+      margin-top: 14px;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      color: #555;
+      font-variant-numeric: tabular-nums;
+    }
+
+        /* Aucun texte du site ne peut être sélectionné. Une sélection repeint le
+           texte au contraste du navigateur et défait le régime graphique de la
+           page, qui travaille au seuil. Elle permet aussi d'emporter ailleurs un
+           texte dont la lisibilité dépend de son milieu d'apparition. */
+        *, *::before, *::after {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            user-select: none;
+        }
+        ::selection { background: transparent; color: inherit; }
+        ::-moz-selection { background: transparent; color: inherit; }
+
+        /* Aucune image ne se laisse prélever d'un geste. Même raison que pour le
+           texte : ce qui est montré ici dépend de son milieu d'apparition, et
+           l'emporter ailleurs — dans un dossier, dans un fil — le rend à un
+           contraste qui n'est pas le sien. La règle n'empêche rien, elle énonce.
+           Une capture d'écran reste possible, et le fichier reste joignable par
+           son adresse : c'est le web, aucune page ne peut faire autrement. */
+        img, video {
+            -webkit-user-drag: none;
+            user-drag: none;
+            -webkit-touch-callout: none;
+        }
+
+        /* Retour en arriere, meme coin et meme regime que sur les autres pages. */
+        #nav-back {
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            z-index: 10;
+            color: #555;
+            cursor: pointer;
+            font-size: 11px;
+            letter-spacing: 0.04em;
+            padding: 6px 10px;
+            margin: -6px -10px;
+            transition: color 0.3s;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        #nav-back:hover { color: #888; }
+        html, body { -webkit-tap-highlight-color: transparent; }
+
+    @media (max-width: 700px) {
+      main { padding: 50px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+    <div id="nav-back" title="retour">../</div>
+
+  <main>
+    <figure>
+      <img src="saveforascream.jpg" alt="Autoplay, 12/10/26. À gauche, un interrogatoire filmé par une caméra de surveillance ; à droite, une vidéo de prière.">
+      <figcaption>YouTube, 12/10/26</figcaption>
+    </figure>
+  </main>
+
+  <script>
+    // Un clic n'importe où ramène en arrière, comme sur les autres pages.
+    document.addEventListener('click', () => {
+      if (window.history.length > 1) { window.history.back(); }
+      else { window.location.href = '../../index.html'; }
+    });
+
+    document.getElementById('nav-back').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (window.history.length > 1) { window.history.back(); }
+      else { window.location.href = '../../index.html'; }
+    });
+  </script>
+
+    <script>
+      /* Le menu contextuel est la porte la plus courte vers « enregistrer
+         l'image ». La fermer est un geste, pas une protection. */
+      document.addEventListener('contextmenu', (e) => {
+        if (e.target.tagName === 'IMG' || e.target.tagName === 'VIDEO') e.preventDefault();
+      });
+      document.addEventListener('dragstart', (e) => {
+        if (e.target.tagName === 'IMG') e.preventDefault();
+      });
+    </script>
+</body>
+</html>

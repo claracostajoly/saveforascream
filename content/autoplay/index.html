@@ -21,19 +21,17 @@
       overscroll-behavior: none;
     }
 
-    /* Un seul diptyque, centré dans la fenêtre à l'ouverture, sans défilement.
+    /* Les diptyques l'un sous l'autre, dans l'ordre des nuits.
        Le format est très horizontal (deux 16:9 côte à côte) : la largeur commande. */
     main {
-      min-height: 100vh;
-      min-height: 100svh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      max-width: 1800px;
+      margin: 0 auto;
       padding: 60px 30px;
       box-sizing: border-box;
     }
 
-    figure { margin: 0; width: 100%; max-width: 1800px; }
+    figure { margin: 0 0 120px; width: 100%; }
+    figure:last-child { margin-bottom: 0; }
 
     img {
       display: block;
@@ -97,6 +95,7 @@
 
     @media (max-width: 700px) {
       main { padding: 50px 16px; }
+      figure { margin-bottom: 70px; }
     }
   </style>
 </head>
@@ -106,7 +105,12 @@
 
   <main>
     <figure>
-      <img src="saveforascream.jpg" alt="Autoplay, 12/10/26. À gauche, un interrogatoire filmé par une caméra de surveillance ; à droite, une vidéo de prière.">
+      <img src="saveforascream-2.jpg" alt="Autoplay, 11/10/26, 03:40 – 06:00. À gauche, un interrogatoire filmé par une caméra de surveillance ; à droite, une vidéo de prière.">
+      <figcaption>YouTube, 11/10/26, 03:40 – 06:00</figcaption>
+    </figure>
+
+    <figure>
+      <img src="saveforascream.jpg" loading="lazy" alt="Autoplay, 12/10/26. À gauche, un interrogatoire filmé par une caméra de surveillance ; à droite, une vidéo de prière.">
       <figcaption>YouTube, 12/10/26</figcaption>
     </figure>
   </main>

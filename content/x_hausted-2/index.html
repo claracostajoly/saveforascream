@@ -34,8 +34,13 @@
     }
 
     img, video { 
-      width: 100%; 
+      width: auto; 
+      max-width: 100%; 
       height: auto; 
+      /* Les images verticales tiennent dans la fenêtre. */
+      max-height: 88vh; 
+      max-height: 88svh; 
+      margin: 0 auto; 
       display: block; 
       background: #0a0a0a; 
     }
@@ -121,11 +126,7 @@
 
   <main>
     <figure>
-      <img src="saveforascream.jpg" alt="x_hausted (2), 1 billion dollars, 2026. Trois tirages de 72 × 128 cm, encre blanche seule sur vinyle noir mat. Vue d’installation.">
-    </figure>
-
-    <figure>
-      <img src="saveforascream-2.png" alt="x_hausted (2), 1 billion dollars, 2026. Détail d’un tirage.">
+      <img src="saveforascream.jpg" alt="x_hausted (2), 1 billion dollars, 2026. Deux tirages de 72 × 128 cm, encre blanche seule sur vinyle noir mat. Vue d’installation.">
     </figure>
   </main>
 

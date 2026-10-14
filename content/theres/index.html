@@ -34,8 +34,13 @@
     }
 
     img, video { 
-      width: 100%; 
+      width: auto; 
+      max-width: 100%; 
       height: auto; 
+      /* Les images verticales tiennent dans la fenêtre. */
+      max-height: 88vh; 
+      max-height: 88svh; 
+      margin: 0 auto; 
       display: block; 
       background: #0a0a0a; 
     }
@@ -122,6 +127,10 @@
   <main>
     <figure>
       <img src="saveforascream.jpg" alt="There’s, 2026. Sortie de transcription non résolue découpée au laser dans un panneau de carton noir mat contrecollé sur un second, 59,6 × 33,5 cm. Vue d’installation.">
+    </figure>
+
+    <figure>
+      <img src="saveforascream-2.jpg" alt="There’s, 2026. Détail.">
     </figure>
   </main>
 

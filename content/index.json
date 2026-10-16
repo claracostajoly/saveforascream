@@ -62,5 +62,9 @@
   {
     "title": "Autoplay",
     "path": "content/autoplay/"
+  },
+  {
+    "title": "Functioning",
+    "path": "content/functioning/"
   }
 ]

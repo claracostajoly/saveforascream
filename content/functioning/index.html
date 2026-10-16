@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Functioning</title>
+  <!-- Functioning
+       Pas de bouton, pas d'état, pas de vide au centre : la page tourne déjà
+       quand on arrive, et elle ne fait qu'une chose. Elle écrit « functioning »,
+       sans fin, et chaque reprise altère un peu la précédente.
+       La fièvre ne vient pas d'un capteur : le navigateur ne donne pas la
+       température. Elle vient du retard que la page prend sur elle-même.
+       Plus le texte s'accumule, plus chaque image arrive tard, et plus la
+       phrase dérive. La page s'use à son propre travail. -->
+  <style>
+    :root {
+      --bg: #e6e5e1;
+      --fg: #1a1a1a;
+      --nav: #8a8a86;
+      --nav-hover: #1a1a1a;
+    }
+
+    html, body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      overscroll-behavior: none;
+      cursor: default;
+    }
+
+    /* Le flux occupe toute la surface, bord à bord, sans marge de respiration. */
+    #flux {
+      margin: 0;
+      padding: 56px 18px 40vh;
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-size: clamp(22px, 3.4vw, 46px);
+      line-height: 1.02;
+      letter-spacing: -0.02em;
+      font-weight: 500;
+      text-align: justify;
+      hyphens: none;
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
+
+    /* Navigation : mêmes coins que les autres pages, régime de cette page. */
+    #nav-back {
+      position: fixed;
+      top: 18px;
+      z-index: 10;
+      color: var(--nav);
+      background: var(--bg);
+      cursor: pointer;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      padding: 6px 10px;
+      margin: -6px -10px;
+      transition: color 0.3s;
+    }
+    #nav-back { left: 18px; }
+    #nav-back:hover { color: var(--nav-hover); }
+
+    /* Aucun texte du site ne peut être sélectionné. Une sélection repeint le
+       texte au contraste du navigateur et défait le régime graphique de la
+       page, qui travaille au seuil. Elle permet aussi d'emporter ailleurs un
+       texte dont la lisibilité dépend de son milieu d'apparition. */
+    *, *::before, *::after {
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      user-select: none;
+    }
+    ::selection { background: transparent; color: inherit; }
+    ::-moz-selection { background: transparent; color: inherit; }
+    html, body { -webkit-tap-highlight-color: transparent; }
+  </style>
+</head>
+<body>
+  <div id="nav-back" title="retour">../</div>
+
+  <p id="flux"></p>
+
+  <script>
+    const PHRASE = 'functioning';
+    const PAR_IMAGE = 3;            // reprises écrites à chaque image
+    const CHARGE_MAX = 600000;      // au-delà, le début est dévoré par la fin
+    const DERIVE = 0.002;           // chance d'altération par reprise, au repos
+    const DERIVE_FIEVRE = 0.04;     // chance supplémentaire quand la page s'essouffle
+
+    const flux = document.getElementById('flux');
+    const texte = document.createTextNode('');
+    flux.appendChild(texte);
+
+    let phrase = PHRASE;
+    let fievre = 0;                 // 0 au repos, monte avec le retard
+    let derniere = performance.now();
+    let suivre = true;              // le défilement suit le flux, sauf si l'on remonte
+
+    // Une altération : substitution, effacement, bégaiement ou inversion.
+    // La phrase n'emprunte qu'à elle-même.
+    function muter(s) {
+      if (!s.length) return PHRASE;
+      const c = s.split('');
+      const i = Math.floor(Math.random() * c.length);
+      const t = Math.random();
+      if (t < 0.40) {
+        const reserve = s + PHRASE;
+        c[i] = reserve[Math.floor(Math.random() * reserve.length)];
+      } else if (t < 0.60) {
+        c.splice(i, 1);
+      } else if (t < 0.85) {
+        c.splice(i, 0, c[i]);
+      } else {
+        const j = Math.floor(Math.random() * c.length);
+        [c[i], c[j]] = [c[j], c[i]];
+      }
+      return c.join('').slice(0, 400);
+    }
+
+    function tour(maintenant) {
+      // Le retard d'une image sur la suivante, ramené à une fièvre lissée.
+      const retard = Math.max(0, maintenant - derniere - 16.7);
+      derniere = maintenant;
+      fievre = fievre * 0.95 + Math.min(1, retard / 120) * 0.05;
+
+      let ajout = '';
+      for (let k = 0; k < PAR_IMAGE; k++) {
+        if (Math.random() < DERIVE + DERIVE_FIEVRE * fievre) phrase = muter(phrase);
+        ajout += phrase + ' ';
+      }
+      texte.appendData(ajout);
+
+      if (texte.length > CHARGE_MAX) {
+        texte.deleteData(0, texte.length - CHARGE_MAX);
+      }
+
+      document.title = phrase || PHRASE;
+      if (suivre) window.scrollTo(0, document.documentElement.scrollHeight);
+
+      requestAnimationFrame(tour);
+    }
+
+    // Remonter le flux suspend le suivi ; revenir en bas le reprend.
+    window.addEventListener('wheel', () => {
+      const bas = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 200;
+      suivre = bas;
+    }, { passive: true });
+    window.addEventListener('touchmove', () => { suivre = false; }, { passive: true });
+    window.addEventListener('touchend', () => {
+      suivre = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 200;
+    }, { passive: true });
+
+    requestAnimationFrame(tour);
+
+    document.getElementById('nav-back').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (window.history.length > 1) { window.history.back(); }
+      else { window.location.href = '../../index.html'; }
+    });
+
+    /* Le menu contextuel est la porte la plus courte vers « enregistrer
+       l'image ». La fermer est un geste, pas une protection. */
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
+  </script>
+</body>
+</html>

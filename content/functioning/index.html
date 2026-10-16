@@ -14,10 +14,10 @@
        phrase dérive. La page s'use à son propre travail. -->
   <style>
     :root {
-      --bg: #e6e5e1;
-      --fg: #1a1a1a;
-      --nav: #8a8a86;
-      --nav-hover: #1a1a1a;
+      --bg: #000;
+      --fg: #e6e4df;
+      --nav: #777;
+      --nav-hover: #e6e4df;
     }
 
     html, body {
@@ -28,15 +28,18 @@
       cursor: default;
     }
 
-    /* Le flux occupe toute la surface, bord à bord, sans marge de respiration. */
+    /* Le flux occupe toute la surface, bord à bord, sans marge de respiration,
+       jusque sous la navigation, qui n'est qu'une étiquette posée dessus. */
     #flux {
       margin: 0;
-      padding: 56px 18px 40vh;
+      padding: 0 6px;
+      min-height: 100vh;
+      box-sizing: border-box;
       font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
       font-size: clamp(22px, 3.4vw, 46px);
       line-height: 1.02;
       letter-spacing: -0.02em;
-      font-weight: 500;
+      font-weight: 400;
       text-align: justify;
       hyphens: none;
       overflow-wrap: anywhere;
@@ -44,7 +47,7 @@
     }
 
     /* Navigation : mêmes coins que les autres pages, régime de cette page. */
-    #nav-back {
+    #nav-back, #nav-note {
       position: fixed;
       top: 18px;
       z-index: 10;
@@ -59,7 +62,8 @@
       transition: color 0.3s;
     }
     #nav-back { left: 18px; }
-    #nav-back:hover { color: var(--nav-hover); }
+    #nav-note { right: 18px; }
+    #nav-back:hover, #nav-note:hover { color: var(--nav-hover); }
 
     /* Aucun texte du site ne peut être sélectionné. Une sélection repeint le
        texte au contraste du navigateur et défait le régime graphique de la
@@ -77,6 +81,7 @@
 </head>
 <body>
   <div id="nav-back" title="retour">../</div>
+  <div id="nav-note" title="note">./note</div>
 
   <p id="flux"></p>
 
@@ -156,6 +161,10 @@
       e.stopPropagation();
       if (window.history.length > 1) { window.history.back(); }
       else { window.location.href = '../../index.html'; }
+    });
+    document.getElementById('nav-note').addEventListener('click', (e) => {
+      e.stopPropagation();
+      window.location.href = 'note.html';
     });
 
     /* Le menu contextuel est la porte la plus courte vers « enregistrer

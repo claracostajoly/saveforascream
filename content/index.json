@@ -66,5 +66,9 @@
   {
     "title": "Functioning",
     "path": "content/functioning/"
+  },
+  {
+    "title": "50hz",
+    "path": "content/50hz/"
   }
 ]

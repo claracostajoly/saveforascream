@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Functioning — note</title>
+  <style>
+    :root {
+      --bg: #000000;
+      --titre-color: #888;
+      --texte-color: #888;
+    }
+
+    * {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--texte-color);
+      min-height: 180vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: crosshair;
+    }
+
+    main {
+      width: 100%;
+      max-width: 600px;
+      padding: 150px 25px;
+    }
+
+    h1 {
+      font-size: 14px;
+      font-weight: 400;
+      margin-bottom: 150px;
+      text-align: center;
+      color: var(--titre-color);
+      cursor: pointer;
+      transition: color 0.3s ease;
+      user-select: none;
+    }
+    h1:hover { color: #fff; }
+
+    .text-container {
+      width: 100%;
+      text-align: justify;
+      line-height: 1.7;
+      font-size: 13px;
+    }
+
+    p {
+      margin: 0;
+      font-weight: 300;
+      letter-spacing: 0.02em;
+      color: var(--texte-color);
+      transition: color 0.4s ease;
+      text-transform: lowercase;
+    }
+
+    p:hover { color: #fff; }
+
+    .intro { margin-bottom: 15vh; }
+
+    .extra-content {
+      opacity: 0;
+      transition: opacity 1.5s ease;
+    }
+    .extra-content.visible { opacity: 1; }
+
+        /* Aucun texte du site ne peut être sélectionné. Une sélection repeint le
+           texte au contraste du navigateur et défait le régime graphique de la
+           page, qui travaille au seuil. Elle permet aussi d'emporter ailleurs un
+           texte dont la lisibilité dépend de son milieu d'apparition. */
+        *, *::before, *::after {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            user-select: none;
+        }
+        ::selection { background: transparent; color: inherit; }
+        ::-moz-selection { background: transparent; color: inherit; }
+
+        html, body { -webkit-tap-highlight-color: transparent; }
+
+        /* Retour en arrière, même coin et même régime que sur les pièces. */
+        #nav-back {
+            position: fixed;
+            top: 18px;
+            left: 18px;
+            z-index: 10;
+            font-size: 11px;
+            letter-spacing: 0.04em;
+            color: #555;
+            cursor: pointer;
+            padding: 6px 10px;
+            margin: -6px -10px;
+            transition: color 0.3s;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        #nav-back:hover { color: #888; }
+    </style>
+</head>
+<body>
+
+  <div id="nav-back" title="retour">../</div>
+
+  <main>
+    <h1 id="note-title">functioning_note</h1>
+
+    <div class="text-container">
+      <div class="intro">
+        <p>functioning, 2026. Pièce web. Un seul mot, réécrit environ cent quatre-vingts fois par seconde et altéré au rythme du retard que la page prend sur elle-même. Durée illimitée.</p>
+      </div>
+
+      <div id="scroll-text" class="extra-content">
+        <p>La page écrit functioning, et c'est tout ce qu'elle fait. Elle tourne déjà quand on arrive. Il n'y a rien à lancer ni à arrêter. De temps en temps, une lettre glisse : elle est remplacée par une autre, effacée, doublée, ou échangée avec sa voisine. Le mot ne prend rien au dehors, il se défait avec ses propres lettres. Et rien n'est réparé. Chaque reprise part de la précédente, avec ses erreurs, si bien que les accidents s'accumulent au lieu de s'annuler.</p>
+        <br><br>
+        <p>Ce qui décide de la fréquence de ces glissements, c'est la fatigue de la page. Le navigateur doit produire une image à intervalle régulier. Plus le texte s'empile, plus il prend du retard, et plus le mot dérive. Personne ne règle cette usure. La page la produit en travaillant, et elle travaille pour rien. Au bout d'un moment, le début du texte s'efface à mesure que la fin s'écrit. Le titre de l'onglet, lui, affiche le mot dans son dernier état.</p>
+        <br><br>
+        <p>Le titre vient de l'expression anglaise functioning addict, qui désigne quelqu'un de dépendant qui continue malgré tout de tenir, d'aller travailler, de faire illusion. J'en ai gardé le participe et retiré le nom. Il ne reste que le fait de fonctionner, à vide, en continu, sans destinataire et sans fin. La pièce ne sert à rien d'autre qu'à rendre cette compulsion sensible : un processus qui tourne parce qu'il ne sait plus faire que ça, et qui finit par montrer sa propre usure.</p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const title = document.getElementById('note-title');
+    const extraContent = document.getElementById('scroll-text');
+
+    let clickTimer = null;
+    title.addEventListener('click', () => {
+      if (clickTimer === null) {
+        clickTimer = setTimeout(() => {
+          clickTimer = null;
+          window.history.back(); // 1 clic : Précédent
+        }, 300);
+      } else {
+        clearTimeout(clickTimer);
+        clickTimer = null;
+        window.location.href = "../../index.html"; // 2 clics : accueil
+      }
+    });
+
+    let lastTap = 0;
+    document.addEventListener('touchend', (e) => {
+      const currentTime = new Date().getTime();
+      const tapLength = currentTime - lastTap;
+      if (tapLength < 300 && tapLength > 0) {
+        window.location.href = "../../index.html"; // Double-tap fond : accueil
+      }
+      lastTap = currentTime;
+    });
+
+    document.addEventListener('dblclick', (e) => {
+      if (e.target.tagName !== 'H1') {
+        window.location.href = "../../index.html"; // Double-clic fond : accueil
+      }
+    });
+
+    window.addEventListener('scroll', () => {
+      const trigger = window.innerHeight * 0.8;
+      if (extraContent.getBoundingClientRect().top < trigger) {
+        extraContent.classList.add('visible');
+      } else {
+        extraContent.classList.remove('visible');
+      }
+    });
+  </script>
+
+  <script>
+    // « ../ » ramène à l'œuvre dont cette note est la note.
+    document.getElementById('nav-back').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (window.history.length > 1) { window.history.back(); }
+      else { window.location.href = './'; }
+    });
+  </script>
+
+</body>
+</html>

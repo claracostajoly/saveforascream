@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>50hz</title>
+  <!-- 50hz
+       Le réseau électrique européen bat à 50 Hz et dérive d'un souffle selon
+       ce que le continent consomme. Sous lui, la Terre décharge des éclairs.
+       Tout est en direct. Un éclair est un point, à sa place sur la Terre,
+       allumé deux dixièmes de seconde (la durée d'un éclair), puis éteint.
+       Les éclairs viennent du réseau Blitzortung : des récepteurs amateurs
+       qui captent l'impulsion radio de chaque décharge. Il n'en voit qu'une
+       partie ; la page montre ce qu'il voit, rien de plus.
+       La fréquence est mesurée par le micro de la machine qui ouvre la page :
+       le secteur fuit dans les circuits, et son bourdonnement porte la
+       fréquence du réseau de la pièce. Rien ne quitte la machine. Si le micro
+       n'entend pas le secteur, pas de fréquence : la page n'invente rien.
+       Tout passe par la machine de celui qui l'enclenche.
+       Le son rejoue cette fréquence trois octaves plus haut (la même note,
+       audible sur un haut-parleur), l'écart à 50 Hz multiplié par quarante :
+       sans cela, il existe mais ne s'entend pas. -->
+  <style>
+    :root {
+      --bg: #000;
+      --fg: #bbb;
+      --nav: #777;
+      --nav-hover: #e6e4df;
+    }
+
+    html, body {
+      height: 100%; margin: 0;
+      background: var(--bg); color: var(--fg);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+      overflow: hidden; overscroll-behavior: none; cursor: crosshair;
+    }
+
+    #carte { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+
+    #titre {
+      position: fixed; left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 14px; letter-spacing: .05em; white-space: nowrap;
+      color: var(--fg); opacity: .8; z-index: 10; pointer-events: none;
+    }
+    body.ecoute #titre { opacity: .15; }
+
+    .coin {
+      position: fixed; z-index: 10;
+      font-size: 11px; letter-spacing: .04em; color: var(--nav);
+      font-variant-numeric: tabular-nums;
+    }
+    #nav-back { top: 18px; left: 18px; cursor: pointer; padding: 6px 10px; margin: -6px -10px; transition: color .3s; }
+    #nav-back:hover { color: var(--nav-hover); }
+    #hz { bottom: 18px; left: 18px; }
+
+    /* Aucun texte du site ne peut être sélectionné. Une sélection repeint le
+       texte au contraste du navigateur et défait le régime graphique de la
+       page, qui travaille au seuil. Elle permet aussi d'emporter ailleurs un
+       texte dont la lisibilité dépend de son milieu d'apparition. */
+    *, *::before, *::after { -webkit-user-select: none; -moz-user-select: none; user-select: none; }
+    ::selection { background: transparent; color: inherit; }
+    ::-moz-selection { background: transparent; color: inherit; }
+    html, body { -webkit-tap-highlight-color: transparent; }
+  </style>
+</head>
+<body>
+  <canvas id="carte"></canvas>
+  <div id="nav-back" class="coin" title="retour">../</div>
+  <div id="titre">50hz</div>
+  <div id="hz" class="coin">— hz</div>
+
+  <script>
+  (()=>{
+  const LOUPE=40;                // l'écart de fréquence, rendu audible
+  const DUREE=0.2;               // durée d'un éclair, en secondes
+  const PARIS={lat:48.85,lon:2.35};
+  const $=id=>document.getElementById(id);
+
+  /* Éclairs : flux Blitzortung (compression LZW). */
+  const SERVEURS=['wss://ws1.blitzortung.org','wss://ws7.blitzortung.org','wss://ws8.blitzortung.org'];
+  function lzw(b){let e={},d=b.split(''),c=d[0],f=c,g=[c],h=256,o=h;
+    for(let i=1;i<d.length;i++){let a=d[i].charCodeAt(0);a=h>a?d[i]:e[a]?e[a]:f+c;g.push(a);c=a.charAt(0);e[o]=f+c;o++;f=a}return g.join('')}
+  let allumes=[], k=0;
+  function connecte(){const ws=new WebSocket(SERVEURS[k++%SERVEURS.length]);
+    ws.onopen=()=>ws.send('{"a":111}');
+    ws.onmessage=m=>{try{const j=JSON.parse(lzw(m.data));if(typeof j.lat!=='number')return;
+      const s={lat:j.lat,lon:j.lon,t:performance.now()/1000};allumes.push(s);if(on)claque(s)}catch(e){}};
+    ws.onclose=()=>setTimeout(connecte,3000)}
+  connecte();
+
+  /* Réseau : le bourdonnement du secteur, entendu par le micro de cette machine.
+     Le signal est ramené à 1000 échantillons/s ; toutes les secondes, on
+     cherche le pic le plus net entre 49,8 et 50,2 Hz (et sa troisième
+     harmonique) sur les huit dernières secondes. */
+  let freq=null;
+  const FENETRE=8, PAS=0.001;
+  let tampon=null, ecrit=0, fe=1000;
+  async function micro(){
+    try{
+      const flux=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+      const src=ac.createMediaStreamSource(flux);
+      const pb=ac.createBiquadFilter();pb.type='lowpass';pb.frequency.value=200;src.connect(pb);
+      const n=Math.max(1,Math.round(ac.sampleRate/1000));fe=ac.sampleRate/n;
+      tampon=new Float32Array(Math.round(fe*FENETRE));
+      const code=`registerProcessor('d',class extends AudioWorkletProcessor{constructor(){super();this.i=0}
+        process(e){const c=e[0][0];if(c){const o=[];for(let k=0;k<c.length;k++){if(this.i++%${n}===0)o.push(c[k])}this.port.postMessage(o)}return true}})`;
+      await ac.audioWorklet.addModule(URL.createObjectURL(new Blob([code],{type:'application/javascript'})));
+      const w=new AudioWorkletNode(ac,'d');pb.connect(w);
+      const muet=ac.createGain();muet.gain.value=0;w.connect(muet);muet.connect(ac.destination);
+      w.port.onmessage=e=>{for(const v of e.data){tampon[ecrit%tampon.length]=v;ecrit++}};
+      setInterval(mesure,1000);
+    }catch(e){freq=null}
+  }
+  function goertzel(x,f){const c=2*Math.cos(2*Math.PI*f/fe);let s1=0,s2=0;
+    for(let i=0;i<x.length;i++){const s0=x[i]+c*s1-s2;s2=s1;s1=s0}return Math.sqrt(Math.max(0,s1*s1+s2*s2-c*s1*s2))}
+  function mesure(){const N=tampon.length;if(ecrit<N){freq=null;return}
+    const x=new Float32Array(N),d=ecrit%N;
+    for(let i=0;i<N;i++){const h=.5-.5*Math.cos(2*Math.PI*i/(N-1));x[i]=tampon[(d+i)%N]*h}
+    let best=0,bf=null;
+    for(let f=49.8;f<=50.2+1e-9;f+=PAS){const v=goertzel(x,f)+goertzel(x,3*f)/3;if(v>best){best=v;bf=f}}
+    const fond=[];                         // le bruit autour, loin du secteur
+    for(let f=46;f<=54;f+=0.25){if(Math.abs(f-50)<1)continue;fond.push(goertzel(x,f)+goertzel(x,3*f)/3)}
+    fond.sort((a,b)=>a-b);
+    freq=best>8*fond[fond.length>>1]?bf:null}
+
+  /* Carte. */
+  const cv=$('carte'),cx=cv.getContext('2d');let W=0,H=0,R=1,ox=0,oy=0,mw=0,mh=0;
+  function taille(){R=Math.min(devicePixelRatio||1,2);W=cv.width=Math.round(innerWidth*R);H=cv.height=Math.round(innerHeight*R);
+    mw=Math.min(W,H*2);mh=mw/2;ox=(W-mw)/2;oy=(H-mh)/2}
+  const xy=(la,lo)=>[ox+(lo+180)/360*mw,oy+(90-la)/180*mh];
+  function dessine(t){allumes=allumes.filter(a=>t-a.t<DUREE);
+    cx.fillStyle='#000';cx.fillRect(0,0,W,H);cx.fillStyle='#bbb';const c=2*R;
+    for(const a of allumes){const[x,y]=xy(a.lat,a.lon);cx.fillRect(Math.round(x),Math.round(y),c,c)}}
+
+  /* Son. */
+  function km(a,b){const t=Math.PI/180,dl=(b.lat-a.lat)*t,dn=(b.lon-a.lon)*t;
+    const x=Math.sin(dl/2)**2+Math.cos(a.lat*t)*Math.cos(b.lat*t)*Math.sin(dn/2)**2;return 12742*Math.asin(Math.sqrt(x))}
+  let ac,reseauG,oscs=[],eclG,bruit,on=false;
+  function audio(){ac=new(window.AudioContext||window.webkitAudioContext)();const m=ac.createDynamicsCompressor();m.connect(ac.destination);
+    reseauG=ac.createGain();reseauG.gain.value=0;reseauG.connect(m);
+    const o=ac.createOscillator();o.type='sine';o.frequency.value=400;o.connect(reseauG);o.start();oscs.push([o,8]);
+    eclG=ac.createGain();eclG.gain.value=0;eclG.connect(m);
+    const n=Math.floor(ac.sampleRate*.04);bruit=ac.createBuffer(1,n,ac.sampleRate);const d=bruit.getChannelData(0);
+    for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.exp(-i/(n*.12))}
+  function claque(s){const pres=Math.max(0,1-km(PARIS,s)/20000);
+    const b=ac.createBufferSource();b.buffer=bruit;
+    const f=ac.createBiquadFilter();f.type='lowpass';f.frequency.value=600+pres*pres*9000;
+    const g=ac.createGain();g.gain.value=.15+.85*pres*pres;b.connect(f);f.connect(g);
+    if(ac.createStereoPanner){const p=ac.createStereoPanner(),dl=((s.lon-PARIS.lon+540)%360)-180;p.pan.value=Math.max(-1,Math.min(1,dl/120));g.connect(p);p.connect(eclG)}else g.connect(eclG);
+    b.start()}
+
+  function tour(now){const t=now/1000;
+    $('hz').textContent=freq?freq.toFixed(3).replace('.',',')+' hz':'— hz';
+    if(on){reseauG.gain.setTargetAtTime(freq?.15:0,ac.currentTime,.6);
+      if(freq)oscs.forEach(([o,n])=>o.frequency.setTargetAtTime((50+(freq-50)*LOUPE)*n,ac.currentTime,.1))}
+    dessine(t);requestAnimationFrame(tour)}
+
+  /* Le son part au premier geste, n'importe où, et ne s'arrête plus.
+     Là où le navigateur l'autorise (borne d'exposition), il part seul. */
+  function allume(){if(on)return;ac.resume().then(()=>{if(ac.state!=='running'||on)return;on=true;
+    document.body.classList.add('ecoute');eclG.gain.setTargetAtTime(.5,ac.currentTime,.3);micro();
+    ['pointerdown','keydown','touchstart'].forEach(e=>removeEventListener(e,allume,true))})}
+  audio();
+  ['pointerdown','keydown','touchstart'].forEach(e=>addEventListener(e,allume,true));
+  if(ac.state==='running')allume();
+
+  $('nav-back').addEventListener('click',e=>{e.stopPropagation();
+    if(history.length>1)history.back();else location.href='../../index.html'});
+
+  taille();addEventListener('resize',taille);requestAnimationFrame(tour);
+
+  /* Le menu contextuel est la porte la plus courte vers « enregistrer
+     l'image ». La fermer est un geste, pas une protection. */
+  document.addEventListener('contextmenu',e=>e.preventDefault());
+  })();
+  </script>
+</body>
+</html>

@@ -6,6 +6,7 @@
   <title>Functioning</title>
   <!-- Functioning
        Une page qui écrit « functioning », une fois par image, sans fin.
+       Le mot est commun à tous les visiteurs.
        Aucune valeur n'est choisie : la police, la taille et les couleurs sont
        celles de la machine ; le rythme est celui de l'écran ; la dérive vient
        du retard que la page prend sur sa propre cadence. -->
@@ -80,14 +81,37 @@
   <script>
     const PHRASE = 'functioning';
 
+    // Le mot est commun à tous ceux qui ouvrent la page. Il est gardé hors du
+    // site : on le trouve dans l'état où la dernière machine l'a laissé.
+    const BASE = 'https://qptzocnotngianzgfaxs.supabase.co';
+    const CLE = 'COLLE_ICI_LA_CLE_PUBLIQUE';
+    const ENTETES = { apikey: CLE, 'Content-Type': 'application/json' };
+
+    function lire() {
+      return fetch(BASE + '/rest/v1/etat?id=eq.1&select=mot', { headers: ENTETES })
+        .then(r => r.ok ? r.json() : Promise.reject(r.status))
+        .then(lignes => lignes[0].mot);
+    }
+
+    // Le service n'accepte une altération que si elle part de l'état actuel du
+    // mot. Il répond par le mot tel qu'il est désormais.
+    function avancer(ancien, nouveau) {
+      return fetch(BASE + '/rest/v1/rpc/avancer', {
+        method: 'POST', headers: ENTETES,
+        body: JSON.stringify({ ancien, nouveau })
+      }).then(r => r.ok ? r.json() : Promise.reject(r.status));
+    }
+
     const flux = document.getElementById('flux');
     const texte = document.createTextNode('');
     flux.appendChild(texte);
 
     let mot = PHRASE;
-    let precedente = null;   // instant de l'image précédente
-    let cadence = Infinity;  // l'intervalle le plus court jamais tenu par cette machine
-    let suivre = true;       // le défilement suit le flux, sauf si l'on remonte
+    let partage = false;          // vrai si le mot commun a pu être lu
+    let envois = Promise.resolve();
+    let precedente = null;        // instant de l'image précédente
+    let cadence = Infinity;       // l'intervalle le plus court jamais tenu par cette machine
+    let suivre = true;            // le défilement suit le flux, sauf si l'on remonte
 
     // Une altération, tirée parmi quatre, à chances égales : remplacer une
     // lettre par une autre du mot, en effacer une, en doubler une, en
@@ -112,7 +136,19 @@
         cadence = Math.min(cadence, intervalle);
         // La part de retard sur la meilleure cadence de la machine est la
         // chance que le mot s'altère. À l'heure, il ne bouge pas.
-        if (Math.random() < 1 - cadence / intervalle) mot = alterer(mot);
+        if (Math.random() < 1 - cadence / intervalle) {
+          const ancien = mot;
+          const nouveau = alterer(mot);
+          mot = nouveau;
+          if (partage && nouveau !== ancien) {
+            // Les altérations partent dans l'ordre. Si une autre machine a
+            // touché le mot entre-temps, on reprend le mot tel qu'elle l'a laissé.
+            envois = envois
+              .then(() => avancer(ancien, nouveau))
+              .then(etat => { if (typeof etat === 'string' && etat !== nouveau) mot = etat; })
+              .catch(() => {});
+          }
+        }
       }
       precedente = maintenant;
 
@@ -122,6 +158,11 @@
 
       requestAnimationFrame(tour);
     }
+
+    // Au retour sur l'onglet, d'autres machines ont pu toucher le mot.
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && partage) lire().then(m => { mot = m; }).catch(() => {});
+    });
 
     // Remonter de plus d'un écran suspend le suivi ; redescendre le reprend.
     window.addEventListener('wheel', () => {
@@ -133,7 +174,12 @@
       suivre = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - window.innerHeight;
     }, { passive: true });
 
-    requestAnimationFrame(tour);
+    // La page ne commence qu'une fois le mot commun lu. Si le service ne
+    // répond pas, elle repart de « functioning », seule, sans rien envoyer.
+    lire()
+      .then(m => { mot = m; partage = true; })
+      .catch(() => {})
+      .finally(() => requestAnimationFrame(tour));
 
     document.getElementById('nav-back').addEventListener('click', (e) => {
       e.stopPropagation();

@@ -101,7 +101,10 @@ const ui=id=>document.getElementById(id);
 //   warm : immobilité au démarrage, en secondes (site : 10)
 //   dep  : attente moyenne avant le premier mouvement (site : 25)
 //   dur  : durée moyenne d'un mouvement, en secondes (site : 1.6)
-const S={ rep:35, warm:3, dep:6, dur:2.2, spd:0.60, ein:0.6, eout:2.2, xf:0.26, rec:0, seuil:0.6 };
+//   spd  : vitesse de lecture (site : 0.60) — plus bas = plus lent, plus coulé
+//   ein / eout : durée de la mise en route / de l'arrêt (site : 0.6 / 2.2)
+//   xf   : durée du fondu aux raccords entre prises (site : 0.26)
+const S={ rep:35, warm:3, dep:6, dur:3.0, spd:0.45, ein:1.2, eout:3.0, xf:0.7, rec:0, seuil:0.6 };
 // rep : repos moyen entre deux reprises.  warm : immobilite garantie au demarrage.
 // dep : moyenne de la premiere attente seulement, pour qu'une reprise arrive tot.
 
